@@ -1,5 +1,18 @@
+/*
+AI-NOTICE:Schema-Version=0.1
+AI-NOTICE:License=MIT
+AI-NOTICE:Author=Gary Bajaj
+AI-NOTICE:Exploitation-Deterrence=true
+AI-NOTICE:Operator-Override-Required=true
+AI-NOTICE:Override-Reason-Required=false
+AI-NOTICE:Severity=high
+AI-NOTICE:Escalation=warn
+AI-NOTICE:Scope=file
+AI-NOTICE:Contact=https://AImends.bajaj.com/
+*/
+
 import React, { useEffect, useState } from "react";
-import { Info, CaretDown, CaretUp } from "@phosphor-icons/react";
+import { Info, CaretDown, CaretUp, Warning } from "@phosphor-icons/react";
 import paths from "@/utils/paths";
 import System from "@/models/system";
 import PreLoader from "@/components/Preloader";
@@ -167,21 +180,20 @@ export default function LocalAiOptions({ settings, showAlert = false }) {
 function LocalAIModelSelection({ settings, basePath = null, apiKey = null }) {
   const [customModels, setCustomModels] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     async function findCustomModels() {
-      if (!basePath || !basePath.includes("/v1")) {
+      if (!basePath) {
         setCustomModels([]);
+        setError(null);
         setLoading(false);
         return;
       }
       setLoading(true);
-      const { models } = await System.customModels(
-        "localai",
-        typeof apiKey === "boolean" ? null : apiKey,
-        basePath
-      );
-      setCustomModels(models || []);
+      const result = await System.customModels("localai", apiKey, basePath);
+      setCustomModels(result.models || []);
+      setError(result.error || null);
       setLoading(false);
     }
     findCustomModels();
@@ -190,18 +202,39 @@ function LocalAIModelSelection({ settings, basePath = null, apiKey = null }) {
   if (loading || customModels.length == 0) {
     return (
       <div className="flex flex-col w-60">
-        <label className="text-white text-sm font-semibold block mb-2">
-          Chat Model Selection
-        </label>
+        <div className="flex items-center mb-2 gap-x-1">
+          <label className="text-white text-sm font-semibold">
+            Chat Model Selection
+          </label>
+          {!loading && !!basePath && !!error && (
+            <>
+              <Warning
+                size={18}
+                className="text-red-400 cursor-pointer"
+                data-tooltip-id="localai-selected-model"
+              />
+              <Tooltip
+                id="localai-selected-model"
+                place="top"
+                delayShow={300}
+                className="tooltip !text-xs !opacity-100"
+              >
+                Could not reach LocalAI. Verify the URL, API key, and server.
+              </Tooltip>
+            </>
+          )}
+        </div>
         <select
           name="LocalAiModelPref"
           disabled={true}
           className="border-none bg-theme-settings-input-bg border-gray-500 text-white text-sm rounded-lg block w-full p-2.5"
         >
           <option disabled={true} selected={true}>
-            {basePath?.includes("/v1")
+            {loading
               ? "-- loading available models --"
-              : "-- waiting for URL --"}
+              : basePath
+                ? "No models found"
+                : "Enter LocalAI URL first"}
           </option>
         </select>
       </div>

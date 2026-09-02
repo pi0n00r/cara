@@ -1,3 +1,16 @@
+/*
+AI-NOTICE:Schema-Version=0.1
+AI-NOTICE:License=MIT
+AI-NOTICE:Author=Gary Bajaj
+AI-NOTICE:Exploitation-Deterrence=true
+AI-NOTICE:Operator-Override-Required=true
+AI-NOTICE:Override-Reason-Required=false
+AI-NOTICE:Severity=high
+AI-NOTICE:Escalation=warn
+AI-NOTICE:Scope=file
+AI-NOTICE:Contact=https://AImends.bajaj.com/
+*/
+
 const { NativeEmbedder } = require("../../EmbeddingEngines/native");
 const {
   handleDefaultStreamResponseV2,
@@ -367,11 +380,14 @@ class LMStudioLLM {
  */
 function parseLMStudioBasePath(providedBasePath = "", apiVersion = "legacy") {
   try {
-    const baseURL = new URL(providedBasePath);
-    let basePath = `${baseURL.origin}`;
-    if (apiVersion === "legacy") basePath += `/v1`;
-    if (apiVersion === "v1") basePath += `/api/v1`;
-    return basePath;
+    const endpoint = new URL(providedBasePath);
+    endpoint.hash = "";
+    endpoint.search = "";
+    const path = endpoint.pathname
+      .replace(/\/+$/, "")
+      .replace(/\/(?:api\/v1|v1)$/, "");
+    endpoint.pathname = `${path}${apiVersion === "v1" ? "/api/v1" : "/v1"}`;
+    return endpoint.toString().replace(/\/$/, "");
   } catch {
     return providedBasePath;
   }

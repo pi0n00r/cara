@@ -1,3 +1,16 @@
+/*
+AI-NOTICE:Schema-Version=0.1
+AI-NOTICE:License=MIT
+AI-NOTICE:Author=Gary Bajaj
+AI-NOTICE:Exploitation-Deterrence=true
+AI-NOTICE:Operator-Override-Required=true
+AI-NOTICE:Override-Reason-Required=false
+AI-NOTICE:Severity=high
+AI-NOTICE:Escalation=warn
+AI-NOTICE:Scope=file
+AI-NOTICE:Contact=https://AImends.bajaj.com/
+*/
+
 const { NativeEmbedder } = require("../../EmbeddingEngines/native");
 const {
   LLMPerformanceMonitor,
@@ -18,7 +31,7 @@ class LocalAiLLM {
     this.className = "LocalAiLLM";
     const { OpenAI: OpenAIApi } = require("openai");
     this.openai = new OpenAIApi({
-      baseURL: process.env.LOCAL_AI_BASE_PATH,
+      baseURL: parseLocalAiBasePath(process.env.LOCAL_AI_BASE_PATH),
       apiKey: process.env.LOCAL_AI_API_KEY ?? null,
     });
     this.model = modelPreference || process.env.LOCAL_AI_MODEL_PREF;
@@ -71,8 +84,9 @@ class LocalAiLLM {
 
       const apiKey = process.env.LOCAL_AI_API_KEY ?? null;
       const headers = apiKey ? { Authorization: `Bearer ${apiKey}` } : {};
-      const { origin } = new URL(process.env.LOCAL_AI_BASE_PATH);
-      const { data: models = [] } = await fetch(`${origin}/v1/models`, {
+      const basePath = parseLocalAiBasePath(process.env.LOCAL_AI_BASE_PATH);
+      const servicePath = getLocalAiServicePath(basePath);
+      const { data: models = [] } = await fetch(`${basePath}/models`, {
         headers,
       }).then((res) => {
         if (!res.ok)
@@ -86,7 +100,7 @@ class LocalAiLLM {
       // never appear in the static config JSON.
       const estimates = await Promise.all(
         models.map(({ id }) =>
-          fetch(`${origin}/api/models/vram-estimate`, {
+          fetch(`${servicePath}/api/models/vram-estimate`, {
             method: "POST",
             headers: { ...headers, "Content-Type": "application/json" },
             body: JSON.stringify({ model: id }),
@@ -117,6 +131,12 @@ class LocalAiLLM {
         })
         .join("")
     );
+  }
+
+  #parseReasoningFromResponse({ message }) {
+    const content = message?.content ?? "";
+    const reasoning = message?.reasoning_content?.trim();
+    return reasoning ? `<think>${reasoning}</think>${content}` : content;
   }
 
   streamingEnabled() {
@@ -226,12 +246,13 @@ class LocalAiLLM {
       return null;
 
     const promptTokens = LLMPerformanceMonitor.countTokens(messages);
-    const completionTokens = LLMPerformanceMonitor.countTokens(
-      result.output.choices[0].message.content
+    const textResponse = this.#parseReasoningFromResponse(
+      result.output.choices[0]
     );
+    const completionTokens = LLMPerformanceMonitor.countTokens(textResponse);
 
     return {
-      textResponse: result.output.choices[0].message.content,
+      textResponse,
       metrics: {
         prompt_tokens: promptTokens,
         completion_tokens: completionTokens,
@@ -287,6 +308,37 @@ class LocalAiLLM {
   }
 }
 
+/**
+ * Normalize a LocalAI OpenAI-compatible endpoint without discarding a reverse
+ * proxy path prefix.
+ * @param {string} providedBasePath
+ * @returns {string}
+ */
+function parseLocalAiBasePath(providedBasePath = "") {
+  try {
+    const endpoint = new URL(providedBasePath);
+    endpoint.hash = "";
+    endpoint.search = "";
+    const path = endpoint.pathname.replace(/\/+$/, "");
+    endpoint.pathname = path.endsWith("/v1") ? path : `${path}/v1`;
+    return endpoint.toString().replace(/\/$/, "");
+  } catch {
+    return providedBasePath;
+  }
+}
+
+function getLocalAiServicePath(providedBasePath = "") {
+  try {
+    const endpoint = new URL(parseLocalAiBasePath(providedBasePath));
+    endpoint.pathname = endpoint.pathname.replace(/\/v1$/, "");
+    return endpoint.toString().replace(/\/$/, "");
+  } catch {
+    return providedBasePath.replace(/\/v1\/?$/, "").replace(/\/$/, "");
+  }
+}
+
 module.exports = {
   LocalAiLLM,
+  parseLocalAiBasePath,
+  getLocalAiServicePath,
 };
