@@ -18,7 +18,7 @@ const mockOpenAI = jest.fn(() => ({
   models: { list: mockList },
 }));
 
-jest.mock("openai", () => ({ OpenAI: mockOpenAI }));
+jest.mock("openai", () => Object.assign(mockOpenAI, { OpenAI: mockOpenAI }));
 jest.mock("../../../../utils/helpers/chat/LLMPerformanceMonitor", () => ({
   LLMPerformanceMonitor: {
     measureAsyncFunction: async (request) => ({
@@ -37,9 +37,8 @@ const {
 const {
   parseLMStudioBasePath,
 } = require("../../../../utils/AiProviders/lmStudio");
-const {
-  getCustomModels,
-} = require("../../../../utils/helpers/customModels");
+const { getCustomModels } = require("../../../../utils/helpers/customModels");
+const LocalAiProvider = require("../../../../utils/agents/aibitat/providers/localai");
 
 const ORIGINAL_ENV = process.env;
 
@@ -89,17 +88,21 @@ describe("local provider endpoint normalization", () => {
       "v1",
       "https://proxy.example.test/services/lmstudio/api/v1",
     ],
-    [
-      "http://localhost:1234",
-      "legacy",
-      "http://localhost:1234/v1",
-    ],
+    ["http://localhost:1234", "legacy", "http://localhost:1234/v1"],
   ])("normalizes LM Studio %s for %s", (input, apiVersion, expected) => {
     expect(parseLMStudioBasePath(input, apiVersion)).toBe(expected);
   });
 });
 
 describe("local provider credentials", () => {
+  it("normalizes the agent client's bare proxy URL and uses its stored token", () => {
+    new LocalAiProvider({ model: "reasoning-model" });
+    expect(mockOpenAI).toHaveBeenLastCalledWith({
+      baseURL: "https://inference.example.test/localai/v1",
+      apiKey: "stored-localai-token",
+    });
+  });
+
   it("uses the stored LocalAI token when the UI sends a mask", async () => {
     mockList.mockResolvedValueOnce({ data: [{ id: "local-model" }] });
     await getCustomModels(
@@ -140,9 +143,7 @@ describe("local provider credentials", () => {
 describe("LocalAI response compatibility", () => {
   it("preserves reasoning content in non-streaming responses", async () => {
     mockCreate.mockResolvedValueOnce({
-      choices: [
-        { message: { reasoning_content: "work", content: "answer" } },
-      ],
+      choices: [{ message: { reasoning_content: "work", content: "answer" } }],
     });
     const provider = new LocalAiLLM({});
     await expect(
