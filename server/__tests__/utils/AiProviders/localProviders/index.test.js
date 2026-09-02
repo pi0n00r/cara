@@ -35,12 +35,14 @@ const {
   getLocalAiServicePath,
 } = require("../../../../utils/AiProviders/localAi");
 const {
+  LMStudioLLM,
   parseLMStudioBasePath,
 } = require("../../../../utils/AiProviders/lmStudio");
 const { getCustomModels } = require("../../../../utils/helpers/customModels");
 const LocalAiProvider = require("../../../../utils/agents/aibitat/providers/localai");
 
 const ORIGINAL_ENV = process.env;
+const ORIGINAL_FETCH = global.fetch;
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -57,6 +59,7 @@ beforeEach(() => {
 
 afterEach(() => {
   process.env = ORIGINAL_ENV;
+  global.fetch = ORIGINAL_FETCH;
 });
 
 describe("local provider endpoint normalization", () => {
@@ -91,6 +94,23 @@ describe("local provider endpoint normalization", () => {
     ["http://localhost:1234", "legacy", "http://localhost:1234/v1"],
   ])("normalizes LM Studio %s for %s", (input, apiVersion, expected) => {
     expect(parseLMStudioBasePath(input, apiVersion)).toBe(expected);
+  });
+
+  it("preserves the LM Studio proxy prefix for context discovery", async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ data: [] }),
+    });
+    await LMStudioLLM.cacheContextWindows(true);
+
+    expect(global.fetch).toHaveBeenCalledWith(
+      "https://inference.example.test/lmstudio/api/v0/models",
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          Authorization: "Bearer stored-lmstudio-token",
+        }),
+      })
+    );
   });
 });
 

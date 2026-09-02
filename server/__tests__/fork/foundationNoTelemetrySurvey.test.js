@@ -52,16 +52,14 @@ describe("foundation fork privacy invariants", () => {
     const dataHandling = read(
       "frontend/src/pages/OnboardingFlow/Steps/DataHandling/index.jsx"
     );
+    const onboardingFlow = read("frontend/src/pages/OnboardingFlow/index.jsx");
 
     expect(frontendRuntime).not.toContain("onboarding.anythingllm.com");
     expect(frontendRuntime).not.toContain("COMPLETE_QUESTIONNAIRE");
     expect(frontendRuntime).not.toContain("/onboarding/survey");
     expect(
       fs.existsSync(
-        path.join(
-          frontendRoot,
-          "pages/OnboardingFlow/Steps/Survey/index.jsx"
-        )
+        path.join(frontendRoot, "pages/OnboardingFlow/Steps/Survey/index.jsx")
       )
     ).toBe(false);
     expect(dataHandling).toContain("await Workspace.all()");
@@ -69,5 +67,9 @@ describe("foundation fork privacy invariants", () => {
     expect(dataHandling).toContain("if (workspace)");
     expect(dataHandling).toContain("navigate(paths.home())");
     expect(dataHandling).toContain("showToast(");
+    expect(onboardingFlow).toContain('if (step === "survey")');
+    expect(onboardingFlow).toContain(
+      "<Navigate to={paths.onboarding.dataHandling()} replace />"
+    );
   });
 });

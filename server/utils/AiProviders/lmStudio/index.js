@@ -93,7 +93,7 @@ class LMStudioLLM {
       const endpoint = new URL(
         parseLMStudioBasePath(process.env.LMSTUDIO_BASE_PATH)
       );
-      endpoint.pathname = "/api/v0/models";
+      endpoint.pathname = endpoint.pathname.replace(/\/v1$/, "/api/v0/models");
       await fetch(endpoint.toString(), {
         headers: {
           "Content-Type": "application/json",

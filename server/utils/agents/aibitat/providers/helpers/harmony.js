@@ -325,30 +325,42 @@ function parseHarmonyCompletion(completion = "", functions = []) {
     cursor = contentEnd + ending.token.length;
   }
 
-  const callIndex = messages.findIndex(
-    (message) =>
-      message.channel === "commentary" &&
-      message.recipient?.startsWith("functions.")
-  );
+  const calls = messages
+    .map((message, index) => ({ message, index }))
+    .filter(
+      ({ message }) =>
+        message.channel === "commentary" &&
+        message.recipient?.startsWith("functions.")
+    )
+    .map(({ message, index }) => {
+      const harmonyAlias = message.recipient.slice("functions.".length);
+      assertHarmonyToolName(harmonyAlias);
+      const name = aliasMap.aliasToOriginal.get(harmonyAlias);
+      if (!name) {
+        throw new HarmonyProtocolError(
+          `model called unknown Harmony tool alias ${JSON.stringify(harmonyAlias)}`
+        );
+      }
+      return { message, index, harmonyAlias, name };
+    });
   const finalIndex = messages.findIndex(
     (message) => message.channel === "final"
   );
-  if (callIndex >= 0 && finalIndex >= 0 && finalIndex < callIndex) {
+  if (calls.length > 0 && finalIndex >= 0) {
     throw new HarmonyProtocolError(
-      "a tool call appeared after a final-channel message"
+      finalIndex < calls[0].index
+        ? "a tool call appeared after a final-channel message"
+        : "a final-channel message appeared after a tool call"
     );
   }
-  if (callIndex >= 0) {
-    const call = messages[callIndex];
+  if (calls.length > 1) {
+    throw new HarmonyProtocolError(
+      "response contained multiple recipient tool calls"
+    );
+  }
+  if (calls.length === 1) {
+    const { message: call, harmonyAlias, name } = calls[0];
     const args = safeJsonParse(call.content, null);
-    const harmonyAlias = call.recipient.slice("functions.".length);
-    assertHarmonyToolName(harmonyAlias);
-    const name = aliasMap.aliasToOriginal.get(harmonyAlias);
-    if (!name) {
-      throw new HarmonyProtocolError(
-        `model called unknown Harmony tool alias ${JSON.stringify(harmonyAlias)}`
-      );
-    }
     if (args !== null && typeof args === "object" && !Array.isArray(args)) {
       return {
         textResponse: null,

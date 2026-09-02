@@ -261,6 +261,33 @@ describe("gpt-oss Harmony codec", () => {
     ).toThrow(/after a final-channel message/);
   });
 
+  it("rejects a final answer emitted after a tool call", () => {
+    expect(() =>
+      parseHarmonyCompletion(
+        `<|channel|>commentary to=functions.${tool.name} <|constrain|>json<|message|>{}<|call|><|start|>assistant<|channel|>final<|message|>Finished.<|return|>`,
+        [tool]
+      )
+    ).toThrow(/final-channel message appeared after a tool call/);
+  });
+
+  it("rejects an unknown alias after a valid tool call", () => {
+    expect(() =>
+      parseHarmonyCompletion(
+        `<|channel|>commentary to=functions.${tool.name} <|constrain|>json<|message|>{}<|call|><|start|>assistant<|channel|>commentary to=functions.unselected_tool <|constrain|>json<|message|>{}`,
+        [tool]
+      )
+    ).toThrow(/unknown Harmony tool alias/);
+  });
+
+  it("rejects a second valid tool call", () => {
+    expect(() =>
+      parseHarmonyCompletion(
+        `<|channel|>commentary to=functions.${tool.name} <|constrain|>json<|message|>{}<|call|><|start|>assistant<|channel|>commentary to=functions.${tool.name} <|constrain|>json<|message|>{}`,
+        [tool]
+      )
+    ).toThrow(/multiple recipient tool calls/);
+  });
+
   it("sends no tools field and includes validated max_tokens", async () => {
     process.env.GPT_OSS_HARMONY_MAX_TOKENS = "1536";
     const create = jest.fn().mockResolvedValue({
