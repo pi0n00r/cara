@@ -5956,14 +5956,6 @@ postgres-interval@^1.1.0:
   dependencies:
     xtend "^4.0.0"
 
-posthog-node@^3.1.1:
-  version "3.6.3"
-  resolved "https://registry.npmjs.org/posthog-node/-/posthog-node-3.6.3.tgz"
-  integrity sha512-JB+ei0LkwE+rKHyW5z79Nd1jUaGxU6TvkfjFqY9vQaHxU5aU8dRl0UUaEmZdZbHwjp3WmXCBQQRNyimwbNQfCw==
-  dependencies:
-    axios "^1.6.2"
-    rusha "^0.8.14"
-
 pptxgenjs@4.0.1:
   version "4.0.1"
   resolved "https://registry.yarnpkg.com/pptxgenjs/-/pptxgenjs-4.0.1.tgz#cd0f202f62f74d950bcd217e90b766da8f73742e"

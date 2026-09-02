@@ -1,3 +1,16 @@
+<!--
+AI-NOTICE:Schema-Version=0.1
+AI-NOTICE:License=MIT
+AI-NOTICE:Author=Gary Bajaj
+AI-NOTICE:Exploitation-Deterrence=true
+AI-NOTICE:Operator-Override-Required=true
+AI-NOTICE:Override-Reason-Required=false
+AI-NOTICE:Severity=high
+AI-NOTICE:Escalation=warn
+AI-NOTICE:Scope=file
+AI-NOTICE:Contact=https://AImends.bajaj.com/
+-->
+
 <a name="readme-top"></a>
 
 > [!NOTE]
@@ -206,50 +219,17 @@ Mintplex Labs & the community maintain a number of deployment methods, scripts, 
 
 ## Telemetry & Privacy
 
-AnythingLLM by Mintplex Labs Inc contains a telemetry feature that collects anonymous usage information.
-
-<details>
-<summary><kbd>More about Telemetry & Privacy for AnythingLLM</kbd></summary>
-
-### Why?
-
-We use this information to help us understand how AnythingLLM is used, to help us prioritize work on new features and bug fixes, and to help us improve AnythingLLM's performance and stability.
-
-### Opting out
-
-Set `DISABLE_TELEMETRY` in your server or docker .env settings to "true" to opt out of telemetry. You can also do this in-app by going to the sidebar > `Privacy` and disabling telemetry.
-
-### What do you explicitly track?
-
-We will only track usage details that help us make product and roadmap decisions, specifically:
-
-- Type of your installation (Docker or Desktop)
-
-- When a document is added or removed. No information _about_ the document. Just that the event occurred. This gives us an idea of use.
-
-- Type of vector database in use. This helps us prioritize changes when updates arrive for that provider.
-
-- Type of LLM provider & model tag in use. This helps us prioritize changes when updates arrive for that provider or model, or combination thereof. eg: reasoning vs regular, multi-modal models, etc.
-
-- When a chat is sent. This is the most regular "event" and gives us an idea of the daily-activity of this project across all installations. Again, only the **event** is sent - we have no information on the nature or content of the chat itself.
-
-You can verify these claims by finding all locations `Telemetry.sendTelemetry` is called. Additionally these events are written to the output log so you can also see the specific data which was sent - if enabled. **No IP or other identifying information is collected**. The Telemetry provider is [PostHog](https://posthog.com/) - an open-source telemetry collection service.
-
-We take privacy very seriously, and we hope you understand that we want to learn how our tool is used, without using annoying popup surveys, so we can build something worth using. The anonymous data is _never_ shared with third parties, ever.
-
-[View all telemetry events in source code](https://github.com/search?q=repo%3AMintplex-Labs%2Fanything-llm%20.sendTelemetry(&type=code)
+Product telemetry is permanently disabled in this fork. It creates no telemetry identifier and includes no telemetry network client. Legacy internal telemetry calls remain as inert compatibility hooks so upstream changes can be merged without restoring collection accidentally.
 
 ### Other outbound connections
 
-If you disable telemetry, you would still see outbound connections to the following services:
+Configured features may still make outbound connections that are necessary for their operation:
 
 - If using an external tool, LLM, Embedding models, or Vector databases, you will still see outbound connections to the respective service provider.
 - `cdn.anythingllm.com` for pulling models from our mirror CDN. This is not tracked by telemetry and is actually useful for those in VPN restricted regions.
 - `github/githubusercontent.com` There are some various flat files that are downloaded from these domains for context window caching.
 
-Basically, if telemetry is disabled we don't collect anything. However, depending on your setup you may still see outbound connections and would be subject to the terms of service of the respective service provider.
-
-</details>
+These functional connections are not product telemetry. Their providers' terms and privacy policies still apply.
 
 ## 👋 Contributing
 

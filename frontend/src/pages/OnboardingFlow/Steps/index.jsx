@@ -1,3 +1,16 @@
+/**
+ * AI-NOTICE:Schema-Version=0.1
+ * AI-NOTICE:License=MIT
+ * AI-NOTICE:Author=Gary Bajaj
+ * AI-NOTICE:Exploitation-Deterrence=true
+ * AI-NOTICE:Operator-Override-Required=true
+ * AI-NOTICE:Override-Reason-Required=false
+ * AI-NOTICE:Severity=high
+ * AI-NOTICE:Escalation=warn
+ * AI-NOTICE:Scope=file
+ * AI-NOTICE:Contact=https://AImends.bajaj.com/
+ */
+
 import { ArrowLeft, ArrowRight } from "@phosphor-icons/react";
 import { useState } from "react";
 import { isMobile } from "react-device-detect";
@@ -6,14 +19,12 @@ import Home from "./Home";
 import LLMPreference from "./LLMPreference";
 import UserSetup from "./UserSetup";
 import DataHandling from "./DataHandling";
-import Survey from "./Survey";
 
 const OnboardingSteps = {
   home: Home,
   "llm-preference": LLMPreference,
   "user-setup": UserSetup,
   "data-handling": DataHandling,
-  survey: Survey,
 };
 
 export default OnboardingSteps;

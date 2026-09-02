@@ -1,3 +1,16 @@
+/**
+ * AI-NOTICE:Schema-Version=0.1
+ * AI-NOTICE:License=MIT
+ * AI-NOTICE:Author=Gary Bajaj
+ * AI-NOTICE:Exploitation-Deterrence=true
+ * AI-NOTICE:Operator-Override-Required=true
+ * AI-NOTICE:Override-Reason-Required=false
+ * AI-NOTICE:Severity=high
+ * AI-NOTICE:Escalation=warn
+ * AI-NOTICE:Scope=file
+ * AI-NOTICE:Contact=https://AImends.bajaj.com/
+ */
+
 process.env.NODE_ENV === "development"
   ? require("dotenv").config({ path: `.env.${process.env.NODE_ENV}` })
   : require("dotenv").config();
@@ -68,7 +81,6 @@ const SystemSettings = {
   ],
   supportedFields: [
     "logo_filename",
-    "telemetry_id",
     "footer_data",
     "support_email",
 
@@ -470,7 +482,6 @@ const SystemSettings = {
       MultiUserMode: await this.isMultiUserMode(),
       MemoryEnabled: await this.memoriesEnabled(),
       MemoryAutoExtraction: await this.memoryAutoExtractionSetting(),
-      DisableTelemetry: process.env.DISABLE_TELEMETRY || "false",
 
       // --------------------------------------------------------
       // Embedder Provider Selection Settings & Configs

@@ -1,8 +1,19 @@
-const { Telemetry } = require("../../models/telemetry");
+/**
+ * AI-NOTICE:Schema-Version=0.1
+ * AI-NOTICE:License=MIT
+ * AI-NOTICE:Author=Gary Bajaj
+ * AI-NOTICE:Exploitation-Deterrence=true
+ * AI-NOTICE:Operator-Override-Required=true
+ * AI-NOTICE:Override-Reason-Required=false
+ * AI-NOTICE:Severity=high
+ * AI-NOTICE:Escalation=warn
+ * AI-NOTICE:Scope=file
+ * AI-NOTICE:Contact=https://AImends.bajaj.com/
+ */
+
 const { BackgroundService } = require("../BackgroundWorkers");
 const { EncryptionManager } = require("../EncryptionManager");
 const { CommunicationKey } = require("../comKey");
-const setupTelemetry = require("../telemetry");
 const eagerLoadContextWindows = require("./eagerLoadContextWindows");
 const markOnboarded = require("./markOnboarded");
 const { PushNotifications } = require("../PushNotifications");
@@ -32,7 +43,6 @@ function bootSSL(app, port = 3001) {
     server
       .listen(port, async () => {
         await markOnboarded();
-        await setupTelemetry();
         new CommunicationKey(true);
         new EncryptionManager();
         new BackgroundService().boot();
@@ -65,7 +75,6 @@ function bootHTTP(app, port = 3001) {
   app
     .listen(port, async () => {
       await markOnboarded();
-      await setupTelemetry();
       new CommunicationKey(true);
       new EncryptionManager();
       new BackgroundService().boot();
@@ -81,11 +90,9 @@ function bootHTTP(app, port = 3001) {
 
 function catchSigTerms() {
   process.once("SIGUSR2", function () {
-    Telemetry.flush();
     process.kill(process.pid, "SIGUSR2");
   });
   process.on("SIGINT", function () {
-    Telemetry.flush();
     process.kill(process.pid, "SIGINT");
   });
 }

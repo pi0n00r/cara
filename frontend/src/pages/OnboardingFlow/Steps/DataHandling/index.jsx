@@ -1,8 +1,23 @@
+/**
+ * AI-NOTICE:Schema-Version=0.1
+ * AI-NOTICE:License=MIT
+ * AI-NOTICE:Author=Gary Bajaj
+ * AI-NOTICE:Exploitation-Deterrence=true
+ * AI-NOTICE:Operator-Override-Required=true
+ * AI-NOTICE:Override-Reason-Required=false
+ * AI-NOTICE:Severity=high
+ * AI-NOTICE:Escalation=warn
+ * AI-NOTICE:Scope=file
+ * AI-NOTICE:Contact=https://AImends.bajaj.com/
+ */
+
 import { useEffect } from "react";
 import paths from "@/utils/paths";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import ProviderPrivacy from "@/components/ProviderPrivacy";
+import Workspace from "@/models/workspace";
+import showToast from "@/utils/toast";
 
 export default function DataHandling({ setHeader, setForwardBtn, setBackBtn }) {
   const { t } = useTranslation();
@@ -17,8 +32,31 @@ export default function DataHandling({ setHeader, setForwardBtn, setBackBtn }) {
     setBackBtn({ showing: false, disabled: false, onClick: handleBack });
   }, []);
 
-  function handleForward() {
-    navigate(paths.onboarding.survey());
+  async function handleForward() {
+    setForwardBtn({ showing: true, disabled: true, onClick: handleForward });
+
+    try {
+      const workspaces = await Workspace.all();
+      if (workspaces.length > 0) {
+        navigate(paths.home());
+        return;
+      }
+
+      const { workspace, message } = await Workspace.new({
+        name: t("new-workspace.placeholder"),
+        onboardingComplete: true,
+      });
+      if (workspace) {
+        navigate(paths.home());
+        return;
+      }
+
+      showToast(message || "Failed to create workspace", "error");
+    } catch (error) {
+      showToast(error?.message || "Failed to create workspace", "error");
+    } finally {
+      setForwardBtn({ showing: true, disabled: false, onClick: handleForward });
+    }
   }
 
   function handleBack() {
