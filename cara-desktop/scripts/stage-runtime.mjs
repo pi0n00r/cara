@@ -77,14 +77,22 @@ fs.cpSync(nodeRuntimeSource, path.join(runtimeDir, "node"), {
   recursive: true,
 });
 
-const yarn =
-  process.platform === "win32"
-    ? path.join(nodeRuntimeSource, "corepack.cmd")
-    : path.join(nodeRuntimeSource, "bin", "corepack");
+const runtimeNode = path.join(
+  nodeRuntimeSource,
+  process.platform === "win32" ? "node.exe" : "bin/node",
+);
+const corepack = path.join(
+  nodeRuntimeSource,
+  "node_modules",
+  "corepack",
+  "dist",
+  "corepack.js",
+);
 for (const projectDir of [serverDir, collectorDir]) {
   run(
-    yarn,
+    runtimeNode,
     [
+      corepack,
       "yarn",
       "install",
       "--production=true",
@@ -95,8 +103,13 @@ for (const projectDir of [serverDir, collectorDir]) {
   );
 }
 run(
-  path.join(serverDir, "node_modules", ".bin", "prisma.cmd"),
-  ["generate", "--schema", schemaPath],
+  runtimeNode,
+  [
+    path.join(serverDir, "node_modules", "prisma", "build", "index.js"),
+    "generate",
+    "--schema",
+    schemaPath,
+  ],
   serverDir,
 );
 

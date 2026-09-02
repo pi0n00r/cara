@@ -15,7 +15,6 @@ on:
   push:
     branches:
       - master
-      - nc/cara-desktop-candidate
   workflow_dispatch:
 
 permissions:
