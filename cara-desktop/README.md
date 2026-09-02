@@ -48,9 +48,12 @@ rented-model fallback.
 ## Build
 
 Build on Windows x64 from the repository root after the frontend production
-build is available. Download and verify the pinned Node.js `18.18.0` Windows
-x64 archive, extract it, and identify the extracted folder in
-`CARA_NODE_RUNTIME`:
+build is available. The desktop builder requires Node.js `22.14.0` or newer.
+The application services remain pinned to Node.js `18.18.0`: download and
+verify that Windows x64 archive, extract it, and identify the extracted folder
+in `CARA_NODE_RUNTIME`. The staging script uses the pinned runtime's own
+Corepack/Yarn, so native dependencies are built for the Node version that Cara
+ships rather than for the newer packaging toolchain:
 
 ```powershell
 cd cara-desktop

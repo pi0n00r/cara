@@ -77,7 +77,10 @@ fs.cpSync(nodeRuntimeSource, path.join(runtimeDir, "node"), {
   recursive: true,
 });
 
-const yarn = process.platform === "win32" ? "corepack.cmd" : "corepack";
+const yarn =
+  process.platform === "win32"
+    ? path.join(nodeRuntimeSource, "corepack.cmd")
+    : path.join(nodeRuntimeSource, "bin", "corepack");
 for (const projectDir of [serverDir, collectorDir]) {
   run(
     yarn,
