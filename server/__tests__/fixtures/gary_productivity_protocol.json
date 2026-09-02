@@ -1,0 +1,6 @@
+{
+  "request": "Run Gary's productivity protocol.",
+  "toolCompletion": "<|channel|>analysis<|message|>The productivity protocol has no arguments; call it now.<|end|><|start|>assistant<|channel|>commentary to=functions.gary_productivity_protocol <|constrain|>json<|message|>{}",
+  "toolResult": "{\"status\":\"complete\",\"itemsProcessed\":3}",
+  "finalCompletion": "<|channel|>analysis<|message|>The tool completed successfully. Report only the useful result.<|end|><|start|>assistant<|channel|>final<|message|>Gary's productivity protocol completed and processed 3 items.<|return|>"
+}

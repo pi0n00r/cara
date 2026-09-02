@@ -3,6 +3,7 @@ const Provider = require("./ai-provider.js");
 const InheritMultiple = require("./helpers/classes.js");
 const UnTooled = require("./helpers/untooled.js");
 const { tooledStream, tooledComplete } = require("./helpers/tooled.js");
+const { harmonyComplete, harmonyEnabledFor } = require("./helpers/harmony.js");
 const { RetryError } = require("../error.js");
 const {
   LMStudioLLM,
@@ -43,7 +44,7 @@ class LMStudioProvider extends InheritMultiple([Provider, UnTooled]) {
   }
 
   get supportsAgentStreaming() {
-    return true;
+    return !harmonyEnabledFor(this.providerTag);
   }
 
   /**
@@ -52,6 +53,7 @@ class LMStudioProvider extends InheritMultiple([Provider, UnTooled]) {
    * @returns {Promise<boolean>}
    */
   async supportsNativeToolCalling() {
+    if (harmonyEnabledFor(this.providerTag)) return true;
     if (this.optsOutOfNativeToolCallingViaEnv(this.providerTag)) return false;
     if (this._supportsToolCalling !== null) return this._supportsToolCalling;
     const lmstudio = new LMStudioLLM(null, this.model);
@@ -140,6 +142,22 @@ class LMStudioProvider extends InheritMultiple([Provider, UnTooled]) {
    * Uses native tool calling when supported, otherwise falls back to UnTooled.
    */
   async complete(messages, functions = []) {
+    if (harmonyEnabledFor(this.providerTag)) {
+      try {
+        await LMStudioLLM.cacheContextWindows();
+        return await harmonyComplete(
+          this.client,
+          this.model,
+          messages,
+          functions,
+          this.getCost.bind(this),
+          { provider: this }
+        );
+      } catch (error) {
+        if (error instanceof OpenAI.AuthenticationError) throw error;
+        throw new RetryError(error.message);
+      }
+    }
     const useNative = await this.supportsNativeToolCalling();
 
     if (!useNative) {
