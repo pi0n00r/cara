@@ -1,0 +1,56 @@
+{
+  "name": "cara-desktop",
+  "version": "0.1.0",
+  "description": "Cara local-first desktop shell",
+  "main": "main.cjs",
+  "author": "Gary Bajaj",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "stage": "node scripts/stage-runtime.mjs",
+    "build:win": "npm run stage && electron-builder --win nsis --x64"
+  },
+  "devDependencies": {
+    "electron": "44.1.1",
+    "electron-builder": "26.15.3"
+  },
+  "build": {
+    "appId": "com.bajaj.cara",
+    "productName": "Cara",
+    "asar": true,
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.cjs",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "runtime",
+        "to": "runtime"
+      }
+    ],
+    "win": {
+      "icon": "../frontend/public/favicon.ico",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "artifactName": "Cara-${version}-windows-x64.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "perMachine": false,
+      "deleteAppDataOnUninstall": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Cara"
+    }
+  }
+}

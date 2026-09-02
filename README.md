@@ -35,9 +35,10 @@ Cara prioritizes:
 The first provider hardening accepts bare or `/v1` LocalAI endpoints, preserves
 reverse-proxy path prefixes for LocalAI and LM Studio, resolves stored masked
 credentials correctly, improves discovery errors, and preserves LocalAI
-reasoning content. Harmony tool calling for compatible `gpt-oss` deployments is
-being integrated as a separate, opt-in capability and will not be advertised as
-stable until its complete live path passes.
+reasoning content. Harmony tool calling for compatible LM Studio `gpt-oss`
+deployments is available as an explicit opt-in. It preserves the complete tool
+surface through reversible aliases for tool names the Harmony grammar cannot
+represent directly.
 
 ## Compatibility Boundary
 
@@ -59,6 +60,7 @@ The monorepo's primary components are:
 - `frontend`: React and Vite application;
 - `server`: Express API, workspaces, agents, and model integrations;
 - `collector`: document ingestion and processing;
+- `cara-desktop`: fork-owned Electron shell and reproducible Windows packaging;
 - `docker`: container build and self-hosting assets;
 - `embed`: upstream-compatible embeddable chat submodule;
 - `browser-extension`: upstream-compatible browser extension submodule.

@@ -41,7 +41,7 @@ function bootSSL(app, port = 3001) {
     const server = https.createServer(credentials, app);
 
     server
-      .listen(port, async () => {
+      .listen(port, process.env.SERVER_HOST || undefined, async () => {
         await markOnboarded();
         new CommunicationKey(true);
         new EncryptionManager();
@@ -73,7 +73,7 @@ function bootHTTP(app, port = 3001) {
   if (!app) throw new Error('No "app" defined - crashing!');
 
   app
-    .listen(port, async () => {
+    .listen(port, process.env.SERVER_HOST || undefined, async () => {
       await markOnboarded();
       new CommunicationKey(true);
       new EncryptionManager();

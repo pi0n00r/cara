@@ -1,0 +1,158 @@
+# AI-NOTICE:Schema-Version=0.1
+# AI-NOTICE:License=MIT
+# AI-NOTICE:Author=Gary Bajaj
+# AI-NOTICE:Exploitation-Deterrence=true
+# AI-NOTICE:Operator-Override-Required=true
+# AI-NOTICE:Override-Reason-Required=false
+# AI-NOTICE:Severity=high
+# AI-NOTICE:Escalation=warn
+# AI-NOTICE:Scope=file
+# AI-NOTICE:Contact=https://AImends.bajaj.com/
+
+name: Cara Windows package
+
+on:
+  push:
+    branches:
+      - nc/cara-desktop-candidate
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package-and-smoke:
+    runs-on: windows-2025
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18.18.0
+          cache: yarn
+          cache-dependency-path: |
+            frontend/yarn.lock
+            server/yarn.lock
+            collector/yarn.lock
+
+      - name: Enable package managers
+        shell: pwsh
+        run: corepack enable
+
+      - name: Build frontend
+        shell: pwsh
+        run: |
+          Set-Location frontend
+          corepack yarn install --frozen-lockfile --non-interactive
+          corepack yarn build
+
+      - name: Install desktop builder
+        shell: pwsh
+        run: npm ci --prefix cara-desktop
+
+      - name: Acquire pinned Node runtime
+        shell: pwsh
+        run: |
+          $archive = Join-Path $env:RUNNER_TEMP 'node-v18.18.0-win-x64.zip'
+          Invoke-WebRequest -UseBasicParsing https://nodejs.org/dist/v18.18.0/node-v18.18.0-win-x64.zip -OutFile $archive
+          $actual = (Get-FileHash -Algorithm SHA256 $archive).Hash.ToLowerInvariant()
+          $expected = 'ae45bc05f4fcc02a17c724670534dc928a2ff4287a14b40f17afa8172601e790'
+          if ($actual -ne $expected) { throw "Node runtime checksum mismatch: $actual" }
+          Expand-Archive -LiteralPath $archive -DestinationPath $env:RUNNER_TEMP
+          "CARA_NODE_RUNTIME=$env:RUNNER_TEMP\node-v18.18.0-win-x64" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Build installer and complete runtime
+        shell: pwsh
+        run: npm run build:win --prefix cara-desktop
+
+      - name: Verify packaged runtime inventory
+        shell: pwsh
+        run: |
+          $required = @(
+            'cara-desktop/runtime/server/node_modules/ip/package.json',
+            'cara-desktop/runtime/server/node_modules/web-push/package.json',
+            'cara-desktop/runtime/server/node_modules/.prisma/client',
+            'cara-desktop/runtime/server/prisma/migrations',
+            'cara-desktop/runtime/server/prisma/schema.prisma',
+            'cara-desktop/runtime/server/swagger',
+            'cara-desktop/runtime/server/public/_index.html',
+            'cara-desktop/runtime/server/jobs',
+            'cara-desktop/runtime/collector/node_modules'
+          )
+          foreach ($path in $required) {
+            if (-not (Test-Path $path)) { throw "Missing runtime asset: $path" }
+          }
+
+      - name: Fresh install and preserved-storage smoke
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $installer = Get-ChildItem cara-desktop/dist/Cara-*-windows-x64.exe | Select-Object -First 1
+          $storage = Join-Path $env:APPDATA 'anythingllm-desktop\storage'
+          $exe = Join-Path $env:LOCALAPPDATA 'Programs\Cara\Cara.exe'
+
+          Start-Process -FilePath $installer.FullName -ArgumentList '/S' -Wait
+          if (-not (Test-Path $exe)) { throw 'Cara executable was not installed' }
+          Start-Process -FilePath $exe
+          $ready = $false
+          for ($i = 0; $i -lt 120; $i++) {
+            try {
+              $response = Invoke-WebRequest -UseBasicParsing http://127.0.0.1:3001/api/ping -TimeoutSec 2
+              if ($response.StatusCode -eq 200) { $ready = $true; break }
+            } catch {}
+            Start-Sleep -Milliseconds 500
+          }
+          if (-not $ready) { throw 'Fresh Cara install did not become healthy' }
+          $home = Invoke-WebRequest -UseBasicParsing http://127.0.0.1:3001 -TimeoutSec 5
+          if ($home.Content -notmatch '<title>Cara') { throw 'Cara frontend identity was not served' }
+          taskkill /IM Cara.exe /T /F 2>$null | Out-Null
+
+          $envFile = Join-Path $storage '.env'
+          Add-Content -LiteralPath $envFile -Value "`nGPT_OSS_HARMONY_TOOL_CALLING=lmstudio`nGPT_OSS_HARMONY_MAX_TOKENS=2048"
+          $sentinel = Join-Path $storage 'engines\cara-preservation-sentinel.bin'
+          New-Item -ItemType Directory -Force -Path (Split-Path $sentinel) | Out-Null
+          [IO.File]::WriteAllBytes($sentinel, [byte[]](1..64))
+          $envHash = (Get-FileHash -Algorithm SHA256 $envFile).Hash
+          $sentinelHash = (Get-FileHash -Algorithm SHA256 $sentinel).Hash
+
+          $db = Join-Path $storage 'anythingllm.db'
+          $env:DATABASE_URL = "file:$($db -replace '\\','/')"
+          Push-Location cara-desktop/runtime/server
+          node -e "const {PrismaClient}=require('@prisma/client');const p=new PrismaClient();(async()=>{for(let i=1;i<=8;i++)await p.workspaces.upsert({where:{slug:'preserved-'+i},update:{},create:{name:'Preserved '+i,slug:'preserved-'+i}});await p.`$disconnect()})().catch(async e=>{console.error(e);await p.`$disconnect();process.exit(1)})"
+          Pop-Location
+
+          Start-Process -FilePath $installer.FullName -ArgumentList '/S' -Wait
+          if ((Get-FileHash -Algorithm SHA256 $envFile).Hash -ne $envHash) { throw '.env changed during upgrade' }
+          if ((Get-FileHash -Algorithm SHA256 $sentinel).Hash -ne $sentinelHash) { throw 'engine state changed during upgrade' }
+          Start-Process -FilePath $exe
+          $ready = $false
+          for ($i = 0; $i -lt 120; $i++) {
+            try {
+              $response = Invoke-WebRequest -UseBasicParsing http://127.0.0.1:3001/api/ping -TimeoutSec 2
+              if ($response.StatusCode -eq 200) { $ready = $true; break }
+            } catch {}
+            Start-Sleep -Milliseconds 500
+          }
+          if (-not $ready) { throw 'Upgraded Cara install did not become healthy' }
+          Push-Location cara-desktop/runtime/server
+          $result = node -e "const {PrismaClient}=require('@prisma/client');const p=new PrismaClient();(async()=>{const integrity=await p.`$queryRawUnsafe('PRAGMA integrity_check');const count=await p.workspaces.count({where:{slug:{startsWith:'preserved-'}}});console.log(JSON.stringify({integrity:integrity[0].integrity_check,count}));await p.`$disconnect()})().catch(async e=>{console.error(e);await p.`$disconnect();process.exit(1)})" | ConvertFrom-Json
+          Pop-Location
+          if ($result.integrity -ne 'ok' -or $result.count -ne 8) { throw 'Preserved database verification failed' }
+          taskkill /IM Cara.exe /T /F 2>$null | Out-Null
+
+      - name: Create checksums
+        shell: pwsh
+        run: |
+          $installer = Get-ChildItem cara-desktop/dist/Cara-*-windows-x64.exe | Select-Object -First 1
+          $hash = (Get-FileHash -Algorithm SHA256 $installer.FullName).Hash.ToLowerInvariant()
+          "$hash  $($installer.Name)" | Set-Content -Encoding ascii "cara-desktop/dist/$($installer.BaseName).sha256"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cara-windows-x64
+          path: |
+            cara-desktop/dist/Cara-*-windows-x64.exe
+            cara-desktop/dist/Cara-*-windows-x64.sha256
+          if-no-files-found: error
+          retention-days: 7
