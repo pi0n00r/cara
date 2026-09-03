@@ -78,7 +78,8 @@ jobs:
             'cara-desktop/runtime/server/swagger',
             'cara-desktop/runtime/server/public/_index.html',
             'cara-desktop/runtime/server/jobs',
-            'cara-desktop/runtime/collector/node_modules'
+            'cara-desktop/runtime/collector/node_modules',
+            'cara-desktop/runtime/codex/codex.exe'
           )
           foreach ($path in $required) {
             if (-not (Test-Path $path)) { throw "Missing runtime asset: $path" }
