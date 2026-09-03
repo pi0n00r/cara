@@ -520,6 +520,10 @@ class EphemeralAgentHandler extends AgentHandler {
     this.aibitat = new AIbitat({
       provider: this.provider ?? "openai",
       model: this.model ?? "gpt-4.1-nano",
+      reasoningEffort:
+        this.#workspace?.chatReasoningEffort ||
+        process.env.CODEX_SUBSCRIPTION_REASONING_EFFORT ||
+        "max",
       chats: await this.#chatHistory(20),
       handlerProps: {
         invocation: {

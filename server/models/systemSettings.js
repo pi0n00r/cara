@@ -887,6 +887,10 @@ const SystemSettings = {
       // OpenAI Keys
       OpenAiKey: !!process.env.OPEN_AI_KEY,
       OpenAiModelPref: process.env.OPEN_MODEL_PREF || "gpt-4.1-nano",
+      CodexSubscriptionModelPref:
+        process.env.CODEX_SUBSCRIPTION_MODEL_PREF || "gpt-5.6-sol",
+      CodexSubscriptionReasoningEffort:
+        process.env.CODEX_SUBSCRIPTION_REASONING_EFFORT || "max",
 
       // Azure + OpenAI Keys
       AzureOpenAiEndpoint: process.env.AZURE_OPENAI_ENDPOINT,

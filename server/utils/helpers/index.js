@@ -133,7 +133,11 @@ function getVectorDbClass(getExactly = null) {
  * @param {{provider: string | null, model: string | null} | null} params - Initialize params for LLMs provider
  * @returns {BaseLLMProvider}
  */
-function getLLMProvider({ provider = null, model = null } = {}) {
+function getLLMProvider({
+  provider = null,
+  model = null,
+  reasoningEffort = null,
+} = {}) {
   const LLMSelection = provider ?? process.env.LLM_PROVIDER ?? "openai";
   const embedder = getEmbeddingEngineSelection();
 
@@ -141,6 +145,11 @@ function getLLMProvider({ provider = null, model = null } = {}) {
     case "openai":
       const { OpenAiLLM } = require("../AiProviders/openAi");
       return new OpenAiLLM(embedder, model);
+    case "codex-subscription":
+      const {
+        CodexSubscriptionLLM,
+      } = require("../AiProviders/codexSubscription");
+      return new CodexSubscriptionLLM(embedder, model, { reasoningEffort });
     case "azure":
       const { AzureOpenAiLLM } = require("../AiProviders/azureOpenAi");
       return new AzureOpenAiLLM(embedder, model);
@@ -477,6 +486,8 @@ function getLLMProviderClass({ provider = null } = {}) {
     case "vertex":
       const { VertexLLM } = require("../AiProviders/vertex");
       return VertexLLM;
+    case "codex-subscription":
+      return require("../AiProviders/codexSubscription").CodexSubscriptionLLM;
     case "anythingllm-router":
       const { AnythingLLMModelRouter } = require("../AiProviders/modelRouter");
       return AnythingLLMModelRouter;
@@ -494,6 +505,8 @@ function getBaseLLMProviderModel({ provider = null } = {}) {
   switch (provider) {
     case "openai":
       return process.env.OPEN_MODEL_PREF;
+    case "codex-subscription":
+      return process.env.CODEX_SUBSCRIPTION_MODEL_PREF || "gpt-5.6-sol";
     case "azure":
       return process.env.AZURE_OPENAI_MODEL_PREF || process.env.OPEN_MODEL_PREF;
     case "anthropic":
@@ -685,6 +698,7 @@ async function resolveProviderConnector({
       connector: getLLMProvider({
         provider: workspace?.chatProvider,
         model: workspace?.chatModel,
+        reasoningEffort: workspace?.chatReasoningEffort,
       }),
       routingMetadata: null,
       prefetchedContext: null,

@@ -156,6 +156,18 @@ describeValidation("chatModel", () => {
   });
 });
 
+describeValidation("chatReasoningEffort", () => {
+  it("accepts supported reasoning profiles", () => {
+    for (const effort of ["none", "low", "medium", "high", "xhigh", "max", "ultra"])
+      expect(Workspace.validations.chatReasoningEffort(effort)).toBe(effort);
+  });
+
+  it("rejects absent and unknown profiles", () => {
+    expect(Workspace.validations.chatReasoningEffort(null)).toBeNull();
+    expect(Workspace.validations.chatReasoningEffort("extreme")).toBeNull();
+  });
+});
+
 describeValidation("agentProvider", () => {
   it("passes a valid string through", () => {
     expect(Workspace.validations.agentProvider("openai")).toBe("openai");

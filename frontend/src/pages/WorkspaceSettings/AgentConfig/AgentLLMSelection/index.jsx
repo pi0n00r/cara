@@ -7,6 +7,7 @@ import AgentModelSelection from "../AgentModelSelection";
 import { useTranslation } from "react-i18next";
 
 const ENABLED_PROVIDERS = [
+  "codex-subscription",
   "openai",
   "anthropic",
   "lmstudio",

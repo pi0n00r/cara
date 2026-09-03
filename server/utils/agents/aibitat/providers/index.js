@@ -36,6 +36,7 @@ const OMLXProvider = require("./omlx.js");
 const MinimaxProvider = require("./minimax.js");
 const CerebrasProvider = require("./cerebras.js");
 const VertexProvider = require("./vertex.js");
+const CodexSubscriptionProvider = require("./codexSubscription.js");
 
 module.exports = {
   OpenAIProvider,
@@ -76,4 +77,5 @@ module.exports = {
   MinimaxProvider,
   CerebrasProvider,
   VertexProvider,
+  CodexSubscriptionProvider,
 };

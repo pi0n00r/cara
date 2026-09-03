@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 export const DISABLED_PROVIDERS = ["azure", "textgenwebui"];
 const PROVIDER_DEFAULT_MODELS = {
   openai: [],
+  "codex-subscription": [],
   gemini: [],
   anthropic: [],
   azure: [],
@@ -45,6 +46,7 @@ const groupedProviders = [
   "togetherai",
   "fireworksai",
   "openai",
+  "codex-subscription",
   "novita",
   "openrouter",
   "ppio",

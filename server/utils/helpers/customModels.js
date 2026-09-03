@@ -30,6 +30,7 @@ const { parseLocalAiBasePath } = require("../AiProviders/localAi");
 
 const SUPPORT_CUSTOM_MODELS = [
   "openai",
+  "codex-subscription",
   "anthropic",
   "localai",
   "ollama",
@@ -101,6 +102,23 @@ async function getCustomModels(
   switch (provider) {
     case "openai":
       return await openAiModels(apiKey);
+    case "codex-subscription": {
+      const {
+        codexAppServer,
+      } = require("../AiProviders/codexSubscription/client");
+      try {
+        const models = (await codexAppServer.models()).map((model) => ({
+          id: model.model,
+          name: model.displayName,
+          organization: "Codex subscription",
+          defaultReasoningEffort: model.defaultReasoningEffort,
+          supportedReasoningEfforts: model.supportedReasoningEfforts,
+        }));
+        return { models, error: null };
+      } catch (error) {
+        return { models: [], error: error.message };
+      }
+    }
     case "openai-stt":
       return await openAiSttModels(apiKey);
     case "anthropic":

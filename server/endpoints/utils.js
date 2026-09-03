@@ -138,6 +138,9 @@ function getModelTag() {
     case "openai":
       model = process.env.OPEN_MODEL_PREF;
       break;
+    case "codex-subscription":
+      model = process.env.CODEX_SUBSCRIPTION_MODEL_PREF;
+      break;
     case "anthropic":
       model = process.env.ANTHROPIC_MODEL_PREF;
       break;

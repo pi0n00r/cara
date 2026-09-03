@@ -11,6 +11,7 @@
     "build:win": "npm run stage && electron-builder --win nsis --x64 --publish never"
   },
   "devDependencies": {
+    "@openai/codex-win32-x64": "npm:@openai/codex@0.153.0-win32-x64",
     "electron": "44.1.1",
     "electron-builder": "26.15.3"
   },

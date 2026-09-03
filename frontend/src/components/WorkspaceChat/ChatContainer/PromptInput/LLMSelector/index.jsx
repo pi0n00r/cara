@@ -28,6 +28,7 @@ export default function LLMSelectorModal({
   const [settings, setSettings] = useState(null);
   const [selectedLLMProvider, setSelectedLLMProvider] = useState(null);
   const [selectedLLMModel, setSelectedLLMModel] = useState("");
+  const [selectedReasoningEffort, setSelectedReasoningEffort] = useState("max");
   const [selectedRouterId, setSelectedRouterId] = useState(null);
   const [availableProviders, setAvailableProviders] = useState(
     WORKSPACE_LLM_PROVIDERS
@@ -50,6 +51,11 @@ export default function LLMSelectorModal({
         setSelectedLLMProvider(providerToSelect);
         autoScrollToSelectedLLMProvider(providerToSelect);
         setSelectedLLMModel(savedModel);
+        setSelectedReasoningEffort(
+          workspace.chatReasoningEffort ??
+            systemSettings.CodexSubscriptionReasoningEffort ??
+            "max"
+        );
         setSelectedRouterId(
           workspace.router_id || systemSettings?.ModelRouterId || null
         );
@@ -95,6 +101,9 @@ export default function LLMSelectorModal({
         : {
             chatProvider: selectedLLMProvider,
             chatModel: validatedModelSelection(selectedLLMModel),
+            ...(selectedLLMProvider === "codex-subscription"
+              ? { chatReasoningEffort: selectedReasoningEffort }
+              : {}),
           };
 
       if (!isRouter && !updateData.chatModel)
@@ -167,6 +176,26 @@ export default function LLMSelectorModal({
                 setSelectedLLMModel={setSelectedLLMModel}
               />
             ))}
+          {selectedLLMProvider === "codex-subscription" &&
+            !missingCredentials && (
+              <select
+                aria-label="Reasoning profile"
+                value={selectedReasoningEffort}
+                onChange={(event) => {
+                  setSelectedReasoningEffort(event.target.value);
+                  setHasChanges(true);
+                }}
+                className="bg-zinc-900 light:bg-white text-white light:text-slate-900 text-sm rounded-lg h-8 w-full px-2.5"
+              >
+                {["low", "medium", "high", "xhigh", "max", "ultra"].map(
+                  (effort) => (
+                    <option key={effort} value={effort}>
+                      {effort}
+                    </option>
+                  )
+                )}
+              </select>
+            )}
         </div>
         <NoSetupWarning
           showing={missingCredentials}

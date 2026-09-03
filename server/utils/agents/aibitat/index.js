@@ -1440,6 +1440,11 @@ https://docs.anythingllm.com/agent/intelligent-tool-selection
     switch (config.provider) {
       case "openai":
         return new Providers.OpenAIProvider({ model: config.model });
+      case "codex-subscription":
+        return new Providers.CodexSubscriptionProvider({
+          model: config.model,
+          reasoningEffort: config.reasoningEffort,
+        });
       case "anthropic":
         return new Providers.AnthropicProvider({ model: config.model });
       case "lmstudio":

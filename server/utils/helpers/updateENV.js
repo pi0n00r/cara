@@ -31,6 +31,21 @@ const KEY_MAPPING = {
     envKey: "OPEN_MODEL_PREF",
     checks: [isNotEmpty],
   },
+  CodexSubscriptionModelPref: {
+    envKey: "CODEX_SUBSCRIPTION_MODEL_PREF",
+    checks: [isNotEmpty],
+  },
+  CodexSubscriptionReasoningEffort: {
+    envKey: "CODEX_SUBSCRIPTION_REASONING_EFFORT",
+    checks: [
+      (input) =>
+        ["none", "low", "medium", "high", "xhigh", "max", "ultra"].includes(
+          input
+        )
+          ? null
+          : "Invalid Codex reasoning effort.",
+    ],
+  },
   // Azure OpenAI Settings
   AzureOpenAiEndpoint: {
     envKey: "AZURE_OPENAI_ENDPOINT",
@@ -1100,6 +1115,7 @@ function supportedTTSProvider(input = "") {
   const validSelection = [
     "native",
     "openai",
+    "codex-subscription",
     "elevenlabs",
     "piper_local",
     "generic-openai",

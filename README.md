@@ -40,6 +40,20 @@ deployments is available as an explicit opt-in. It preserves the complete tool
 surface through reversible aliases for tool names the Harmony grammar cannot
 represent directly.
 
+## Codex Subscription
+
+Cara includes a native Codex subscription provider for users who sign in with
+ChatGPT. It uses the official Codex app-server locally rather than translating a
+subscription into an API key. Available models and reasoning profiles are read
+from the signed-in account; `Sol` with `Max` reasoning is supported when the
+account advertises `gpt-5.6-sol` and `max`.
+
+The system selection is a default. Each workspace can independently select its
+Codex model and reasoning profile from the chat model picker or workspace
+settings. The Windows desktop package carries its own pinned Codex runtime and
+stores Cara's Codex sign-in under Cara's existing application storage, separate
+from unrelated Codex Desktop tasks and configuration.
+
 ## Compatibility Boundary
 
 Cara is an application-core fork. Existing internal package names, environment

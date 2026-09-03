@@ -77,6 +77,23 @@ fs.cpSync(nodeRuntimeSource, path.join(runtimeDir, "node"), {
   recursive: true,
 });
 
+const codexPackageDir = path.dirname(
+  fileURLToPath(import.meta.resolve("@openai/codex-win32-x64/package.json")),
+);
+const codexSource = path.join(
+  codexPackageDir,
+  "vendor",
+  "x86_64-pc-windows-msvc",
+  "bin",
+  "codex.exe",
+);
+const codexTarget = path.join(runtimeDir, "codex", "codex.exe");
+if (!fs.existsSync(codexSource)) {
+  throw new Error(`Missing pinned Codex Windows runtime: ${codexSource}`);
+}
+fs.mkdirSync(path.dirname(codexTarget), { recursive: true });
+fs.copyFileSync(codexSource, codexTarget);
+
 const runtimeNode = path.join(
   nodeRuntimeSource,
   process.platform === "win32" ? "node.exe" : "bin/node",
@@ -127,6 +144,7 @@ for (const required of [
     "node",
     process.platform === "win32" ? "node.exe" : "bin/node",
   ),
+  codexTarget,
 ]) {
   if (!fs.existsSync(required))
     throw new Error(`Missing runtime asset: ${required}`);

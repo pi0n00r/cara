@@ -164,6 +164,29 @@ export default function WorkspaceLLMSelection({
         workspace={workspace}
         setHasChanges={setHasChanges}
       />
+      {selectedLLM === "codex-subscription" && (
+        <div className="flex flex-col gap-y-[8px]">
+          <label className="block input-label">Reasoning profile</label>
+          <select
+            name="chatReasoningEffort"
+            defaultValue={
+              workspace?.chatReasoningEffort ||
+              settings?.CodexSubscriptionReasoningEffort ||
+              "max"
+            }
+            onChange={() => setHasChanges(true)}
+            className="border-none bg-theme-settings-input-bg text-white text-sm rounded-lg block w-full p-2.5"
+          >
+            {["low", "medium", "high", "xhigh", "max", "ultra"].map(
+              (effort) => (
+                <option key={effort} value={effort}>
+                  {effort}
+                </option>
+              )
+            )}
+          </select>
+        </div>
+      )}
     </div>
   );
 }

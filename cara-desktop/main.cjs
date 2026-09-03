@@ -77,6 +77,7 @@ function runtimeEnvironment(storageDir, parsedEnv) {
     ...parsedEnv,
     NODE_ENV: "production",
     STORAGE_DIR: storageDir,
+    CARA_CODEX_CLI_PATH: path.join(process.resourcesPath, "runtime", "codex", "codex.exe"),
     DATABASE_URL: `file:${databasePath.replace(/\\/g, "/")}`,
     SERVER_HOST: "127.0.0.1",
     COLLECTOR_HOST: "127.0.0.1",

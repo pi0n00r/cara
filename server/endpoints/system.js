@@ -76,6 +76,9 @@ const { SystemPromptVariables } = require("../models/systemPromptVariables");
 const { isReservedCommand } = require("../utils/chats");
 const { AgentSkillWhitelist } = require("../models/agentSkillWhitelist");
 const { Memory } = require("../models/memory");
+const {
+  codexAppServer,
+} = require("../utils/AiProviders/codexSubscription/client");
 
 function systemEndpoints(app) {
   if (!app) return;
@@ -1131,6 +1134,47 @@ function systemEndpoints(app) {
       } catch (error) {
         console.error(error);
         response.status(500).end();
+      }
+    }
+  );
+
+  app.get(
+    "/system/codex-subscription",
+    [validatedRequest, flexUserRoleValid([ROLES.admin])],
+    async (_, response) => {
+      try {
+        const state = await codexAppServer.account();
+        response.status(200).json({
+          signedIn: state?.account?.type === "chatgpt",
+          account: state?.account?.type === "chatgpt" ? state.account : null,
+        });
+      } catch (error) {
+        response.status(503).json({ signedIn: false, error: error.message });
+      }
+    }
+  );
+
+  app.post(
+    "/system/codex-subscription/login",
+    [validatedRequest, flexUserRoleValid([ROLES.admin])],
+    async (_, response) => {
+      try {
+        response.status(200).json(await codexAppServer.login());
+      } catch (error) {
+        response.status(503).json({ error: error.message });
+      }
+    }
+  );
+
+  app.post(
+    "/system/codex-subscription/logout",
+    [validatedRequest, flexUserRoleValid([ROLES.admin])],
+    async (_, response) => {
+      try {
+        await codexAppServer.logout();
+        response.status(200).json({ success: true });
+      } catch (error) {
+        response.status(503).json({ success: false, error: error.message });
       }
     }
   );

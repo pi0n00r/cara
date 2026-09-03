@@ -6,6 +6,7 @@ import System from "@/models/system";
 import showToast from "@/utils/toast";
 import AnythingLLMIcon from "@/media/logo/anything-llm-icon.png";
 import OpenAiLogo from "@/media/llmprovider/openai.png";
+import CodexSubscriptionOptions from "@/components/LLMSelection/CodexSubscriptionOptions";
 import GenericOpenAiLogo from "@/media/llmprovider/generic-openai.png";
 import AzureOpenAiLogo from "@/media/llmprovider/azure.png";
 import AnthropicLogo from "@/media/llmprovider/anthropic.png";
@@ -104,6 +105,15 @@ export const MODEL_ROUTER_PROVIDER = {
  * This **never** includes the model router provider.
  */
 export const AVAILABLE_LLM_PROVIDERS = [
+  {
+    name: "Codex subscription",
+    value: "codex-subscription",
+    logo: OpenAiLogo,
+    options: (settings) => <CodexSubscriptionOptions settings={settings} />,
+    description:
+      "Use Cara with a ChatGPT subscription, selectable Codex models, and reasoning profiles.",
+    requiredConfig: [],
+  },
   {
     name: "OpenAI",
     value: "openai",

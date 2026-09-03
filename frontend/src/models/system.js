@@ -623,6 +623,25 @@ const System = {
         return { models: [], error: e.message };
       });
   },
+  codexSubscription: async function () {
+    return fetch(`${API_BASE}/system/codex-subscription`, {
+      headers: baseHeaders(),
+    })
+      .then((res) => res.json())
+      .catch((error) => ({ signedIn: false, error: error.message }));
+  },
+  codexSubscriptionLogin: async function () {
+    return fetch(`${API_BASE}/system/codex-subscription/login`, {
+      method: "POST",
+      headers: baseHeaders(),
+    }).then((res) => res.json());
+  },
+  codexSubscriptionLogout: async function () {
+    return fetch(`${API_BASE}/system/codex-subscription/logout`, {
+      method: "POST",
+      headers: baseHeaders(),
+    }).then((res) => res.json());
+  },
   chats: async (offset = 0) => {
     return await fetch(`${API_BASE}/system/workspace-chats`, {
       method: "POST",

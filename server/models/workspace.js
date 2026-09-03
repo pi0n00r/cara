@@ -24,6 +24,7 @@ function isNullOrNaN(value) {
  * @property {number} similarityThreshold - The similarity threshold of the workspace
  * @property {string} chatProvider - The chat provider of the workspace
  * @property {string} chatModel - The chat model of the workspace
+ * @property {string} chatReasoningEffort - The reasoning profile of the workspace
  * @property {number} topN - The top N of the workspace
  * @property {string} chatMode - The chat mode of the workspace
  * @property {string} agentProvider - The agent provider of the workspace
@@ -49,6 +50,7 @@ const Workspace = {
     "similarityThreshold",
     "chatProvider",
     "chatModel",
+    "chatReasoningEffort",
     "topN",
     "chatMode",
     "agentProvider",
@@ -105,6 +107,16 @@ const Workspace = {
     chatModel: (value) => {
       if (!value || typeof value !== "string") return null;
       return String(value);
+    },
+    chatReasoningEffort: (value) => {
+      if (
+        !value ||
+        !["none", "low", "medium", "high", "xhigh", "max", "ultra"].includes(
+          value
+        )
+      )
+        return null;
+      return value;
     },
     agentProvider: (value) => {
       if (!value || typeof value !== "string" || value === "none") return null;
@@ -257,6 +269,7 @@ const Workspace = {
     if (validatedUpdates?.chatProvider === "default") {
       validatedUpdates.chatProvider = null;
       validatedUpdates.chatModel = null;
+      validatedUpdates.chatReasoningEffort = null;
     }
 
     // When switching to anythingllm-router, chatModel is not used.
@@ -702,7 +715,13 @@ const Workspace = {
       workspace?.agentModel ??
       workspace?.chatModel ??
       getBaseLLMProviderModel({ provider });
-    const agentConfig = { provider, model };
+    const agentConfig = {
+      provider,
+      model,
+      reasoningEffort:
+        workspace?.chatReasoningEffort ||
+        process.env.CODEX_SUBSCRIPTION_REASONING_EFFORT,
+    };
     const agentProvider = new AIbitat(agentConfig).getProviderForConfig(
       agentConfig
     );
