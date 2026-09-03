@@ -65,6 +65,9 @@ jobs:
       - name: Build installer and complete runtime
         shell: pwsh
         run: npm run build:win --prefix cara-desktop
+        env:
+          PUPPETEER_SKIP_DOWNLOAD: "true"
+          SHARP_IGNORE_GLOBAL_LIBVIPS: "true"
 
       - name: Verify packaged runtime inventory
         shell: pwsh
