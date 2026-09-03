@@ -104,21 +104,17 @@ jobs:
             throw "$label did not become healthy"
           }
 
-          $originalAppData = $env:APPDATA
-          $freshAppData = Join-Path $env:RUNNER_TEMP 'cara-fresh-appdata'
-          $env:APPDATA = $freshAppData
+          $storage = Join-Path $env:APPDATA 'anythingllm-desktop\storage'
+          if (Test-Path $storage) { throw 'Ephemeral runner unexpectedly contains an existing profile' }
           Start-Process -FilePath $unpacked
           Wait-Cara 'Fresh packaged Cara'
           $homeResponse = Invoke-WebRequest -UseBasicParsing http://127.0.0.1:3001 -TimeoutSec 5
           if ($homeResponse.Content -notmatch '<title[^>]*>Cara') { throw 'Cara frontend identity was not served' }
-          $freshEnv = Join-Path $freshAppData 'anythingllm-desktop\storage\.env'
+          $freshEnv = Join-Path $storage '.env'
           if (-not (Test-Path $freshEnv)) { throw 'Fresh profile was not initialized' }
           taskkill /IM Cara.exe /T /F 2>$null | Out-Null
           Start-Sleep -Seconds 2
-          $env:APPDATA = $originalAppData
 
-          $storage = Join-Path $originalAppData 'anythingllm-desktop\storage'
-          New-Item -ItemType Directory -Force -Path $storage | Out-Null
           $envFile = Join-Path $storage '.env'
           @'
           JWT_SECRET=1111111111111111111111111111111111111111111111111111111111111111
