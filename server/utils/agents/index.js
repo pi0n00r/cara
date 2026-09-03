@@ -1,3 +1,9 @@
+/*
+AI-NOTICE:Schema-Version=0.1
+AI-NOTICE:License=MIT
+AI-NOTICE:Author=Gary Bajaj
+AI-NOTICE:Scope=file
+*/
 const AIbitat = require("./aibitat");
 const AgentPlugins = require("./aibitat/plugins");
 const {
@@ -127,6 +133,10 @@ class AgentHandler {
 
   checkSetup() {
     switch (this.provider) {
+      case "codex-subscription":
+        // Authentication is held by Cara's private Codex home and validated
+        // when the app-server handles the request; no API key is required.
+        break;
       case "openai":
         if (!process.env.OPEN_AI_KEY)
           throw new Error("OpenAI API key must be provided to use agents.");
@@ -314,6 +324,8 @@ class AgentHandler {
    */
   providerDefault(provider = this.provider) {
     switch (provider) {
+      case "codex-subscription":
+        return process.env.CODEX_SUBSCRIPTION_MODEL_PREF ?? "gpt-5.6-sol";
       case "openai":
         return process.env.OPEN_MODEL_PREF ?? "gpt-4.1-nano";
       case "anthropic":

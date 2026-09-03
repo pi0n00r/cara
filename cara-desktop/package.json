@@ -1,6 +1,6 @@
 {
   "name": "cara-desktop",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Cara local-first desktop shell",
   "main": "main.cjs",
   "author": "Gary Bajaj",
