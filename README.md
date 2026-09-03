@@ -22,6 +22,18 @@ This repository is a focused fork of
 upstream application's broad provider, document, workspace, and agent
 capabilities while improving the paths we operate in production.
 
+## Install Cara
+
+The current tested Windows build is
+[Cara 0.2.1](https://github.com/pi0n00r/cara/releases/tag/v0.2.1). Download
+`Cara-0.2.1-windows-x64.exe` and verify it against the adjacent SHA-256 file
+before installation.
+
+Cara upgrades the existing AnythingLLM Desktop profile in place. It retains
+workspaces, documents, database state, MCP configuration, provider settings,
+and model storage under `%APPDATA%\anythingllm-desktop\storage`. Keep that
+directory when replacing or repairing the application.
+
 ## Fork Direction
 
 Cara prioritizes:
@@ -50,9 +62,21 @@ account advertises `gpt-5.6-sol` and `max`.
 
 The system selection is a default. Each workspace can independently select its
 Codex model and reasoning profile from the chat model picker or workspace
-settings. The Windows desktop package carries its own pinned Codex runtime and
-stores Cara's Codex sign-in under Cara's existing application storage, separate
-from unrelated Codex Desktop tasks and configuration.
+settings, and can use the provider for ordinary chat or automatic agent and MCP
+tool execution. The Windows desktop package carries its own pinned Codex
+runtime and stores Cara's Codex sign-in under Cara's existing application
+storage, separate from unrelated Codex Desktop tasks and configuration.
+
+## Version Guidance
+
+| Version | Status | Operator guidance |
+| --- | --- | --- |
+| `0.2.1` | Current tested build | Use this release for Codex subscription workspaces. It repairs the normal automatic workspace-agent initialization path and retains the LocalAI, LM Studio, Harmony, and preserved-profile work from earlier builds. |
+| `0.2.0` | Superseded | Do not install, promote, retag, or repackage. Native sign-in, model discovery, and direct inference passed, but automatic workspace agents rejected `codex-subscription` during setup. The correction is in `0.2.1`. |
+| `0.1.0` | Historical foundation | Retained for provenance of the LocalAI, LM Studio, Harmony, and Windows packaging foundation. It predates the Codex subscription provider; use a current release instead. |
+
+Released tags and attached files are immutable evidence. Future corrections
+must use a new version rather than replacing an older tag or asset.
 
 ## Compatibility Boundary
 
