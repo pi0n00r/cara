@@ -1,6 +1,6 @@
 {
   "name": "cara-desktop",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Cara local-first desktop shell",
   "main": "main.cjs",
   "author": "Gary Bajaj",
@@ -45,6 +45,7 @@
       "artifactName": "Cara-${version}-windows-x64.${ext}"
     },
     "nsis": {
+      "include": "build/installer.nsh",
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "perMachine": false,

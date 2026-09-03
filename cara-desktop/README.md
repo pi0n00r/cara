@@ -32,6 +32,12 @@ MCP configuration, provider credentials, workspace prompts, corpus pointers,
 and downloaded engine state remain in place. Uninstalling Cara also preserves
 the directory.
 
+Before an install or in-place upgrade, the installer closes Cara and any
+Cara-owned provider sidecar still running from this storage tree. It does not
+terminate unrelated Node processes. This prevents a stale provider bridge from
+blocking removal of the previous application version while leaving the profile
+untouched.
+
 ## Harmony Opt-In
 
 Add these settings to the preserved `.env` only when using a compatible
