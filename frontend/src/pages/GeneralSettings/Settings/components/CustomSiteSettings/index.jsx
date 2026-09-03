@@ -1,3 +1,16 @@
+/*
+AI-NOTICE:Schema-Version=0.1
+AI-NOTICE:License=MIT
+AI-NOTICE:Author=Gary Bajaj
+AI-NOTICE:Exploitation-Deterrence=true
+AI-NOTICE:Operator-Override-Required=true
+AI-NOTICE:Override-Reason-Required=false
+AI-NOTICE:Severity=high
+AI-NOTICE:Escalation=warn
+AI-NOTICE:Scope=file
+AI-NOTICE:Contact=https://AImends.bajaj.com/
+*/
+
 import { useEffect, useState } from "react";
 import Admin from "@/models/admin";
 import showToast from "@/utils/toast";
@@ -63,17 +76,14 @@ export default function CustomSiteSettings() {
             name="meta_page_title"
             type="text"
             className="border-none bg-theme-settings-input-bg mt-2 text-white placeholder:text-theme-settings-input-placeholder text-sm rounded-lg focus:outline-primary-button active:outline-primary-button outline-none block w-fit py-2 px-4"
-            placeholder="AnythingLLM | Your personal LLM trained on anything"
+            placeholder="Cara | Local-first agent workspace"
             autoComplete="off"
             onChange={(e) => {
               setSettings((prev) => {
                 return { ...prev, title: e.target.value };
               });
             }}
-            value={
-              settings.title ??
-              "AnythingLLM | Your personal LLM trained on anything"
-            }
+            value={settings.title ?? "Cara | Local-first agent workspace"}
           />
         </div>
       </div>

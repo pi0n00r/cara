@@ -72,4 +72,22 @@ describe("foundation fork privacy invariants", () => {
       "<Navigate to={paths.onboarding.dataHandling()} replace />"
     );
   });
+
+  it("uses Cara production metadata without upstream service branding", () => {
+    const metadata = read("server/utils/boot/MetaGenerator.js");
+    const customSiteSettings = read(
+      "frontend/src/pages/GeneralSettings/Settings/components/CustomSiteSettings/index.jsx"
+    );
+
+    expect(metadata).toContain('const DEFAULT_TITLE = "Cara');
+    expect(metadata).toContain(
+      'const PROJECT_URL = "https://github.com/pi0n00r/cara"'
+    );
+    expect(metadata).not.toContain("https://anythingllm.com");
+    expect(metadata).not.toContain("Mintplex-Labs/anything-llm");
+    expect(customSiteSettings).toContain("Cara | Local-first agent workspace");
+    expect(customSiteSettings).not.toContain(
+      "AnythingLLM | Your personal LLM trained on anything"
+    );
+  });
 });

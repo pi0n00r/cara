@@ -1,3 +1,21 @@
+/*
+AI-NOTICE:Schema-Version=0.1
+AI-NOTICE:License=MIT
+AI-NOTICE:Author=Gary Bajaj
+AI-NOTICE:Exploitation-Deterrence=true
+AI-NOTICE:Operator-Override-Required=true
+AI-NOTICE:Override-Reason-Required=false
+AI-NOTICE:Severity=high
+AI-NOTICE:Escalation=warn
+AI-NOTICE:Scope=file
+AI-NOTICE:Contact=https://AImends.bajaj.com/
+*/
+
+const DEFAULT_TITLE = "Cara | Local-first agent workspace";
+const DEFAULT_DESCRIPTION =
+  "Cara coordinates self-hosted models, tools, and knowledge.";
+const PROJECT_URL = "https://github.com/pi0n00r/cara";
+
 /**
  * @typedef MetaTagDefinition
  * @property {('link'|'meta')} tag - the type of meta tag element
@@ -27,8 +45,8 @@ class MetaGenerator {
   #customConfig = null;
 
   #defaultManifest = {
-    name: "AnythingLLM",
-    short_name: "AnythingLLM",
+    name: "Cara",
+    short_name: "Cara",
     display: "standalone",
     orientation: "portrait",
     start_url: "/",
@@ -59,21 +77,21 @@ class MetaGenerator {
       {
         tag: "title",
         props: null,
-        content: "AnythingLLM | Your personal LLM trained on anything",
+        content: DEFAULT_TITLE,
       },
 
       {
         tag: "meta",
         props: {
           name: "title",
-          content: "AnythingLLM | Your personal LLM trained on anything",
+          content: DEFAULT_TITLE,
         },
       },
       {
         tag: "meta",
         props: {
-          description: "title",
-          content: "AnythingLLM | Your personal LLM trained on anything",
+          name: "description",
+          content: DEFAULT_DESCRIPTION,
         },
       },
 
@@ -81,28 +99,27 @@ class MetaGenerator {
       { tag: "meta", props: { property: "og:type", content: "website" } },
       {
         tag: "meta",
-        props: { property: "og:url", content: "https://anythingllm.com" },
+        props: { property: "og:url", content: PROJECT_URL },
       },
       {
         tag: "meta",
         props: {
           property: "og:title",
-          content: "AnythingLLM | Your personal LLM trained on anything",
+          content: DEFAULT_TITLE,
         },
       },
       {
         tag: "meta",
         props: {
           property: "og:description",
-          content: "AnythingLLM | Your personal LLM trained on anything",
+          content: DEFAULT_DESCRIPTION,
         },
       },
       {
         tag: "meta",
         props: {
           property: "og:image",
-          content:
-            "https://raw.githubusercontent.com/Mintplex-Labs/anything-llm/master/images/promo.png",
+          content: "/favicon.png",
         },
       },
 
@@ -113,28 +130,27 @@ class MetaGenerator {
       },
       {
         tag: "meta",
-        props: { property: "twitter:url", content: "https://anythingllm.com" },
+        props: { property: "twitter:url", content: PROJECT_URL },
       },
       {
         tag: "meta",
         props: {
           property: "twitter:title",
-          content: "AnythingLLM | Your personal LLM trained on anything",
+          content: DEFAULT_TITLE,
         },
       },
       {
         tag: "meta",
         props: {
           property: "twitter:description",
-          content: "AnythingLLM | Your personal LLM trained on anything",
+          content: DEFAULT_DESCRIPTION,
         },
       },
       {
         tag: "meta",
         props: {
           property: "twitter:image",
-          content:
-            "https://raw.githubusercontent.com/Mintplex-Labs/anything-llm/master/images/promo.png",
+          content: "/favicon.png",
         },
       },
 
@@ -243,9 +259,7 @@ class MetaGenerator {
           return {
             tag: "title",
             props: null,
-            content:
-              customTitle ??
-              "AnythingLLM | Your personal LLM trained on anything",
+            content: customTitle ?? DEFAULT_TITLE,
           };
         }
         // Override meta title
@@ -254,9 +268,7 @@ class MetaGenerator {
             tag: "meta",
             props: {
               name: "title",
-              content:
-                customTitle ??
-                "AnythingLLM | Your personal LLM trained on anything",
+              content: customTitle ?? DEFAULT_TITLE,
             },
           };
         }
@@ -266,9 +278,7 @@ class MetaGenerator {
             tag: "meta",
             props: {
               property: "og:title",
-              content:
-                customTitle ??
-                "AnythingLLM | Your personal LLM trained on anything",
+              content: customTitle ?? DEFAULT_TITLE,
             },
           };
         }
@@ -278,9 +288,7 @@ class MetaGenerator {
             tag: "meta",
             props: {
               property: "twitter:title",
-              content:
-                customTitle ??
-                "AnythingLLM | Your personal LLM trained on anything",
+              content: customTitle ?? DEFAULT_TITLE,
             },
           };
         }
@@ -346,7 +354,7 @@ class MetaGenerator {
       const { SystemSettings } = require("../../models/systemSettings");
       const manifestName = await SystemSettings.getValueOrFallback(
         { label: "meta_page_title" },
-        "AnythingLLM"
+        "Cara"
       );
       const faviconURL = await SystemSettings.getValueOrFallback(
         { label: "meta_page_favicon" },
