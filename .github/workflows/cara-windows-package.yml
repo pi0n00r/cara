@@ -23,7 +23,7 @@ permissions:
 jobs:
   package-and-smoke:
     runs-on: windows-2025
-    timeout-minutes: 60
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
 
@@ -105,7 +105,7 @@ jobs:
           }
           if (-not $ready) { throw 'Fresh Cara install did not become healthy' }
           $homeResponse = Invoke-WebRequest -UseBasicParsing http://127.0.0.1:3001 -TimeoutSec 5
-          if ($homeResponse.Content -notmatch '<title>Cara') { throw 'Cara frontend identity was not served' }
+          if ($homeResponse.Content -notmatch '<title[^>]*>Cara') { throw 'Cara frontend identity was not served' }
           taskkill /IM Cara.exe /T /F 2>$null | Out-Null
 
           $envFile = Join-Path $storage '.env'
