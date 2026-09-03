@@ -32,7 +32,7 @@
       }
     ],
     "win": {
-      "icon": "../frontend/public/favicon.ico",
+      "icon": "assets/icon.png",
       "target": [
         {
           "target": "nsis",
