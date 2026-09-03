@@ -108,6 +108,17 @@ jobs:
             throw "$label did not become healthy"
           }
 
+          function Invoke-Installer([string]$label, [string]$arguments) {
+            Write-Host "[$label] starting"
+            $process = Start-Process -FilePath $installer.FullName -ArgumentList $arguments -PassThru
+            if (-not $process.WaitForExit(180000)) {
+              taskkill /PID $process.Id /T /F 2>$null | Out-Null
+              throw "$label exceeded the 180-second bound"
+            }
+            Write-Host "[$label] exited $($process.ExitCode)"
+            if ($process.ExitCode -ne 0) { throw "$label failed: $($process.ExitCode)" }
+          }
+
           $storage = Join-Path $env:APPDATA 'anythingllm-desktop\storage'
           if (Test-Path $storage) { throw 'Ephemeral runner unexpectedly contains an existing profile' }
           Start-Process -FilePath $unpacked
@@ -140,7 +151,7 @@ jobs:
           $envHash = (Get-FileHash -Algorithm SHA256 $envFile).Hash
           $sentinelHash = (Get-FileHash -Algorithm SHA256 $sentinel).Hash
 
-          Start-Process -FilePath $installer.FullName -ArgumentList '/S' -Wait
+          Invoke-Installer 'Fresh silent install' '/S'
           if (-not (Test-Path $exe)) { throw 'Cara executable was not installed' }
           if ((Get-FileHash -Algorithm SHA256 $envFile).Hash -ne $envHash) { throw '.env changed during preserved-profile install' }
           if ((Get-FileHash -Algorithm SHA256 $sentinel).Hash -ne $sentinelHash) { throw 'engine state changed during preserved-profile install' }
@@ -168,8 +179,23 @@ jobs:
           if ($sidecar.HasExited) { throw 'Provider-sidecar fixture did not remain running' }
           if ($unrelated.HasExited) { throw 'Unrelated Node fixture did not remain running' }
 
-          $upgrade = Start-Process -FilePath $installer.FullName -ArgumentList '/S /KEEP_APP_DATA /currentuser' -Wait -PassThru
-          if ($upgrade.ExitCode -ne 0) { throw "In-place silent upgrade failed: $($upgrade.ExitCode)" }
+          Write-Host '[Cleanup preflight] verifying the process filter directly'
+          & cara-desktop/scripts/stop-cara-processes.ps1 `
+            -InstallDir (Split-Path $exe -Parent) `
+            -StorageDir $storage
+          if ($LASTEXITCODE -ne 0) { throw "Cleanup preflight failed: $LASTEXITCODE" }
+          $sidecar.Refresh()
+          if (-not $sidecar.HasExited) { throw 'Cleanup preflight left the Cara-owned provider sidecar running' }
+          $unrelated.Refresh()
+          if ($unrelated.HasExited) { throw 'Cleanup preflight terminated an unrelated Node process' }
+
+          # Restart the Cara-owned fixture so the installer must independently
+          # exercise the cleanup path during an in-place upgrade.
+          $sidecar = Start-Process -FilePath (Get-Command node.exe).Source -ArgumentList "`"$providerScript`"" -PassThru
+          Start-Sleep -Seconds 1
+          if ($sidecar.HasExited) { throw 'Second provider-sidecar fixture did not remain running' }
+
+          Invoke-Installer 'In-place silent upgrade' '/S /KEEP_APP_DATA /currentuser'
           $sidecar.Refresh()
           if (-not $sidecar.HasExited) { throw 'Installer left the Cara-owned provider sidecar running' }
           $unrelated.Refresh()

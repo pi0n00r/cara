@@ -10,7 +10,12 @@
   Pop $0
   Pop $1
   ${If} $0 != 0
-    MessageBox MB_ICONSTOP|MB_OK "Cara could not stop its existing background services. Close Cara completely and retry.$\r$\n$\r$\n$1"
-    Abort
+    ${If} ${Silent}
+      SetErrorLevel 1
+      Quit
+    ${Else}
+      MessageBox MB_ICONSTOP|MB_OK "Cara could not stop its existing background services. Close Cara completely and retry.$\r$\n$\r$\n$1"
+      Abort
+    ${EndIf}
   ${EndIf}
 !macroend
