@@ -137,6 +137,10 @@ function getLLMProvider({
   provider = null,
   model = null,
   reasoningEffort = null,
+  serviceTier = null,
+  executionMode = null,
+  workspacePath = null,
+  skillsPath = null,
 } = {}) {
   const LLMSelection = provider ?? process.env.LLM_PROVIDER ?? "openai";
   const embedder = getEmbeddingEngineSelection();
@@ -149,7 +153,13 @@ function getLLMProvider({
       const {
         CodexSubscriptionLLM,
       } = require("../AiProviders/codexSubscription");
-      return new CodexSubscriptionLLM(embedder, model, { reasoningEffort });
+      return new CodexSubscriptionLLM(embedder, model, {
+        reasoningEffort,
+        serviceTier,
+        executionMode,
+        workspacePath,
+        skillsPath,
+      });
     case "azure":
       const { AzureOpenAiLLM } = require("../AiProviders/azureOpenAi");
       return new AzureOpenAiLLM(embedder, model);
@@ -699,6 +709,10 @@ async function resolveProviderConnector({
         provider: workspace?.chatProvider,
         model: workspace?.chatModel,
         reasoningEffort: workspace?.chatReasoningEffort,
+        serviceTier: workspace?.chatServiceTier,
+        executionMode: workspace?.codexExecutionMode,
+        workspacePath: workspace?.codexWorkspacePath,
+        skillsPath: workspace?.codexSkillsPath,
       }),
       routingMetadata: null,
       prefetchedContext: null,

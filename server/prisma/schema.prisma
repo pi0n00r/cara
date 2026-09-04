@@ -133,6 +133,10 @@ model workspaces {
   chatProvider                 String?
   chatModel                    String?
   chatReasoningEffort          String?
+  chatServiceTier              String?
+  codexExecutionMode           String?                        @default("read-only")
+  codexWorkspacePath           String?
+  codexSkillsPath              String?
   topN                         Int?                           @default(4)
   chatMode                     String?                        @default("chat")
   pfpFilename                  String?

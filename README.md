@@ -69,6 +69,20 @@ tool execution. The Windows desktop package carries its own pinned Codex
 runtime and stores Cara's Codex sign-in under Cara's existing application
 storage, separate from unrelated Codex Desktop tasks and configuration.
 
+Codex chats remain read-only unless an operator explicitly selects the
+workspace-write profile and supplies existing absolute workspace/output and
+installed-skills directories. Codex app-server 0.153.0 requires a
+`selectedCapabilityRoots` environment location to reference a matching selected
+environment, so Cara selects the pinned protocol's `local` environment with the
+workspace as its `cwd`. The workspace-write sandbox grants writes only under
+that workspace; the skills capability root is available for discovery and
+reading and does not make the skills tree or Cara's private `CODEX_HOME`
+writable. Relative, blank, missing, and non-directory paths fail closed.
+
+Workspace speed choices also come from the selected model's advertised
+`serviceTiers`. Default/Standard omits `serviceTier` and inherits the catalog
+default; Cara does not assume or force a named priority tier.
+
 ## Version Guidance
 
 | Version | Status | Operator guidance |

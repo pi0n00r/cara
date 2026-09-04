@@ -1444,6 +1444,10 @@ https://docs.anythingllm.com/agent/intelligent-tool-selection
         return new Providers.CodexSubscriptionProvider({
           model: config.model,
           reasoningEffort: config.reasoningEffort,
+          serviceTier: config.serviceTier,
+          executionMode: config.executionMode,
+          workspacePath: config.workspacePath,
+          skillsPath: config.skillsPath,
         });
       case "anthropic":
         return new Providers.AnthropicProvider({ model: config.model });

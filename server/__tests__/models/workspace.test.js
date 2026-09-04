@@ -1,3 +1,7 @@
+const mockCodexModels = jest.fn();
+jest.mock("../../utils/AiProviders/codexSubscription/client", () => ({
+  codexAppServer: { models: (...args) => mockCodexModels(...args) },
+}));
 const { Workspace } = require("../../models/workspace");
 
 describe("Workspace.validations coverage check", () => {
@@ -158,7 +162,15 @@ describeValidation("chatModel", () => {
 
 describeValidation("chatReasoningEffort", () => {
   it("accepts supported reasoning profiles", () => {
-    for (const effort of ["none", "low", "medium", "high", "xhigh", "max", "ultra"])
+    for (const effort of [
+      "none",
+      "low",
+      "medium",
+      "high",
+      "xhigh",
+      "max",
+      "ultra",
+    ])
       expect(Workspace.validations.chatReasoningEffort(effort)).toBe(effort);
   });
 
@@ -167,6 +179,40 @@ describeValidation("chatReasoningEffort", () => {
     expect(Workspace.validations.chatReasoningEffort("extreme")).toBeNull();
   });
 });
+
+describeValidation("chatServiceTier", () => {
+  it("preserves arbitrary advertised tier ids for catalog validation", () => {
+    expect(Workspace.validations.chatServiceTier("future-tier")).toBe(
+      "future-tier"
+    );
+  });
+  it("uses null for inherited/default speed", () => {
+    expect(Workspace.validations.chatServiceTier("")).toBeNull();
+  });
+});
+
+describeValidation("codexExecutionMode", () => {
+  it("defaults to read-only and accepts explicit workspace write", () => {
+    expect(Workspace.validations.codexExecutionMode(null)).toBe("read-only");
+    expect(Workspace.validations.codexExecutionMode("workspace-write")).toBe(
+      "workspace-write"
+    );
+  });
+  it("rejects unknown modes", () => {
+    expect(() =>
+      Workspace.validations.codexExecutionMode("danger-full-access")
+    ).toThrow();
+  });
+});
+
+for (const key of ["codexWorkspacePath", "codexSkillsPath"]) {
+  describeValidation(key, () => {
+    it("accepts absolute paths and rejects relative paths", () => {
+      expect(Workspace.validations[key](process.cwd())).toBe(process.cwd());
+      expect(() => Workspace.validations[key]("relative/path")).toThrow();
+    });
+  });
+}
 
 describeValidation("agentProvider", () => {
   it("passes a valid string through", () => {
@@ -315,5 +361,65 @@ describe("Workspace.validateFields", () => {
   it("coerces a null openAiHistory to the default instead of failing", () => {
     const validated = Workspace.validateFields({ openAiHistory: null });
     expect(validated.openAiHistory).toBe(20);
+  });
+});
+
+describe("Workspace Codex release gates", () => {
+  afterEach(() => {
+    jest.restoreAllMocks();
+    mockCodexModels.mockReset();
+  });
+
+  it("does not load the Codex catalog for an unrelated update", async () => {
+    jest.spyOn(Workspace, "get").mockResolvedValue({
+      id: 1,
+      chatProvider: "codex-subscription",
+      chatModel: "model-a",
+      chatServiceTier: "burst",
+    });
+    const update = jest
+      .spyOn(Workspace, "_update")
+      .mockResolvedValue({ workspace: { id: 1 }, message: null });
+
+    await expect(Workspace.update(1, { name: "Renamed" })).resolves.toEqual({
+      workspace: { id: 1 },
+      message: null,
+    });
+    expect(mockCodexModels).not.toHaveBeenCalled();
+    expect(update).toHaveBeenCalledWith(1, { name: "Renamed" });
+  });
+
+  it("persists an advertised service tier distinctly", async () => {
+    mockCodexModels.mockResolvedValue([
+      { model: "model-a", serviceTiers: [{ id: "burst" }] },
+    ]);
+    jest.spyOn(Workspace, "get").mockResolvedValue({
+      id: 1,
+      chatProvider: "codex-subscription",
+      chatModel: "model-a",
+    });
+    const update = jest
+      .spyOn(Workspace, "_update")
+      .mockResolvedValue({ workspace: { id: 1 }, message: null });
+    await expect(
+      Workspace.update(1, { chatServiceTier: "burst" })
+    ).resolves.toEqual({ workspace: { id: 1 }, message: null });
+    expect(update).toHaveBeenCalledWith(1, { chatServiceTier: "burst" });
+  });
+
+  it("rejects an unadvertised service tier without writing", async () => {
+    mockCodexModels.mockResolvedValue([
+      { model: "model-a", serviceTiers: [{ id: "burst" }] },
+    ]);
+    jest.spyOn(Workspace, "get").mockResolvedValue({
+      id: 1,
+      chatProvider: "codex-subscription",
+      chatModel: "model-a",
+    });
+    const update = jest.spyOn(Workspace, "_update");
+    const result = await Workspace.update(1, { chatServiceTier: "priority" });
+    expect(result.workspace).toBeNull();
+    expect(result.message).toContain("not advertised");
+    expect(update).not.toHaveBeenCalled();
   });
 });

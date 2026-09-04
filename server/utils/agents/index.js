@@ -871,6 +871,10 @@ class AgentHandler {
         this.invocation.workspace.chatReasoningEffort ||
         process.env.CODEX_SUBSCRIPTION_REASONING_EFFORT ||
         "max",
+      serviceTier: this.invocation.workspace.chatServiceTier,
+      executionMode: this.invocation.workspace.codexExecutionMode,
+      workspacePath: this.invocation.workspace.codexWorkspacePath,
+      skillsPath: this.invocation.workspace.codexSkillsPath,
       chats: await this.#chatHistory(20),
       handlerProps: {
         invocation: this.invocation,

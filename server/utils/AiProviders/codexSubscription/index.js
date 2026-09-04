@@ -8,6 +8,7 @@ const { v4: uuidv4 } = require("uuid");
 const { NativeEmbedder } = require("../../EmbeddingEngines/native");
 const { writeResponseChunk } = require("../../helpers/chat/responses");
 const { codexAppServer } = require("./client");
+const { codexThreadOptions } = require("./options");
 
 class CodexSubscriptionLLM {
   constructor(embedder = null, modelPreference = null, options = {}) {
@@ -20,6 +21,12 @@ class CodexSubscriptionLLM {
       options.reasoningEffort ||
       process.env.CODEX_SUBSCRIPTION_REASONING_EFFORT ||
       "max";
+    this.serviceTier = options.serviceTier || null;
+    this.execution = {
+      executionMode: options.executionMode,
+      workspacePath: options.workspacePath,
+      skillsPath: options.skillsPath,
+    };
     this.embedder = embedder ?? new NativeEmbedder();
     this.defaultTemp = 1;
     this.limits = { history: 30000, system: 30000, user: 140000 };
@@ -87,6 +94,13 @@ class CodexSubscriptionLLM {
     if (!model)
       throw new Error(`Codex subscription model is unavailable: ${this.model}`);
     if (
+      this.serviceTier &&
+      !model.serviceTiers?.some((tier) => tier.id === this.serviceTier)
+    )
+      throw new Error(
+        `${this.serviceTier} is not advertised by the selected Codex model.`
+      );
+    if (
       !model.supportedReasoningEfforts.some(
         (item) => item.reasoningEffort === this.reasoningEffort
       )
@@ -97,11 +111,11 @@ class CodexSubscriptionLLM {
 
     const started = await codexAppServer.request("thread/start", {
       model: model.model,
+      ...(this.serviceTier ? { serviceTier: this.serviceTier } : {}),
       ephemeral: true,
       approvalPolicy: "never",
-      sandbox: "read-only",
+      ...codexThreadOptions(this.execution),
       dynamicTools: [],
-      environments: [],
       baseInstructions:
         runOptions.baseInstructions ||
         "Return the requested assistant response. Cara supplies any workspace tools and their results.",
@@ -148,6 +162,7 @@ class CodexSubscriptionLLM {
           threadId,
           model: model.model,
           effort: this.reasoningEffort,
+          ...(this.serviceTier ? { serviceTier: this.serviceTier } : {}),
           input: this._inputs(messages),
           ...(runOptions.outputSchema
             ? { outputSchema: runOptions.outputSchema }

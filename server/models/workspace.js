@@ -7,6 +7,10 @@ const { v4: uuidv4 } = require("uuid");
 const { User } = require("./user");
 const { PromptHistory } = require("./promptHistory");
 const { SystemSettings } = require("./systemSettings");
+const path = require("path");
+const {
+  codexThreadOptions,
+} = require("../utils/AiProviders/codexSubscription/options");
 
 function isNullOrNaN(value) {
   if (value === null) return true;
@@ -51,6 +55,10 @@ const Workspace = {
     "chatProvider",
     "chatModel",
     "chatReasoningEffort",
+    "chatServiceTier",
+    "codexExecutionMode",
+    "codexWorkspacePath",
+    "codexSkillsPath",
     "topN",
     "chatMode",
     "agentProvider",
@@ -117,6 +125,31 @@ const Workspace = {
       )
         return null;
       return value;
+    },
+    chatServiceTier: (value) => {
+      if (value === null || value === undefined || value === "") return null;
+      if (typeof value !== "string" || !value.trim())
+        throw new Error("Invalid Codex service tier.");
+      return value;
+    },
+    codexExecutionMode: (value) => {
+      if (value === null || value === undefined || value === "read-only")
+        return "read-only";
+      if (value !== "workspace-write")
+        throw new Error("Invalid Codex execution mode.");
+      return value;
+    },
+    codexWorkspacePath: (value) => {
+      if (value === null || value === undefined || value === "") return null;
+      if (typeof value !== "string" || !path.isAbsolute(value))
+        throw new Error("Codex workspace path must be absolute.");
+      return path.normalize(value);
+    },
+    codexSkillsPath: (value) => {
+      if (value === null || value === undefined || value === "") return null;
+      if (typeof value !== "string" || !path.isAbsolute(value))
+        throw new Error("Codex skills path must be absolute.");
+      return path.normalize(value);
     },
     agentProvider: (value) => {
       if (!value || typeof value !== "string" || value === "none") return null;
@@ -230,11 +263,14 @@ const Workspace = {
     }
 
     try {
+      const validatedAdditionalFields = this.validateFields(additionalFields);
+      this.validateCodexWorkspaceProfile(validatedAdditionalFields);
+      await this.validateCodexServiceTier(validatedAdditionalFields);
       const workspace = await prisma.workspaces.create({
         data: {
           name: this.validations.name(name),
           chatMode: "automatic",
-          ...this.validateFields(additionalFields),
+          ...validatedAdditionalFields,
           slug,
         },
       });
@@ -259,7 +295,36 @@ const Workspace = {
   update: async function (id = null, updates = {}) {
     if (!id) throw new Error("No workspace id provided for update");
 
-    const validatedUpdates = this.validateFields(updates);
+    let validatedUpdates;
+    try {
+      validatedUpdates = this.validateFields(updates);
+      const updatedKeys = Object.keys(validatedUpdates);
+      const validatesExecutionProfile = updatedKeys.some((key) =>
+        [
+          "codexExecutionMode",
+          "codexWorkspacePath",
+          "codexSkillsPath",
+        ].includes(key)
+      );
+      const validatesServiceTier = updatedKeys.some((key) =>
+        ["chatProvider", "chatModel", "chatServiceTier"].includes(key)
+      );
+      if (validatesExecutionProfile || validatesServiceTier) {
+        const current = await this.get({ id });
+        const candidate = { ...current, ...validatedUpdates };
+        if (validatedUpdates.chatProvider === "default") {
+          candidate.chatProvider = null;
+          candidate.chatModel = null;
+          candidate.chatServiceTier = null;
+        }
+        if (validatesExecutionProfile)
+          this.validateCodexWorkspaceProfile(candidate);
+        if (validatesServiceTier)
+          await this.validateCodexServiceTier(candidate);
+      }
+    } catch (error) {
+      return { workspace: null, message: error.message };
+    }
     if (Object.keys(validatedUpdates).length === 0)
       return { workspace: { id }, message: "No valid fields to update!" };
 
@@ -270,6 +335,7 @@ const Workspace = {
       validatedUpdates.chatProvider = null;
       validatedUpdates.chatModel = null;
       validatedUpdates.chatReasoningEffort = null;
+      validatedUpdates.chatServiceTier = null;
     }
 
     // When switching to anythingllm-router, chatModel is not used.
@@ -284,6 +350,41 @@ const Workspace = {
     }
 
     return this._update(id, validatedUpdates);
+  },
+
+  validateCodexWorkspaceProfile(workspace = {}) {
+    if ((workspace.codexExecutionMode || "read-only") === "read-only") return;
+    codexThreadOptions({
+      executionMode: workspace.codexExecutionMode,
+      workspacePath: workspace.codexWorkspacePath,
+      skillsPath: workspace.codexSkillsPath,
+    });
+  },
+
+  async validateCodexServiceTier(workspace = {}) {
+    if (!workspace.chatServiceTier) return;
+    if (
+      (workspace.chatProvider || process.env.LLM_PROVIDER) !==
+      "codex-subscription"
+    )
+      throw new Error(
+        "A Codex service tier requires the Codex Subscription provider."
+      );
+    const {
+      codexAppServer,
+    } = require("../utils/AiProviders/codexSubscription/client");
+    const model = (await codexAppServer.models()).find(
+      (item) =>
+        item.model === workspace.chatModel || item.id === workspace.chatModel
+    );
+    if (
+      !model?.serviceTiers?.some(
+        (tier) => tier.id === workspace.chatServiceTier
+      )
+    )
+      throw new Error(
+        `${workspace.chatServiceTier} is not advertised by the selected Codex model.`
+      );
   },
 
   /**

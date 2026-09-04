@@ -113,6 +113,8 @@ async function getCustomModels(
           organization: "Codex subscription",
           defaultReasoningEffort: model.defaultReasoningEffort,
           supportedReasoningEfforts: model.supportedReasoningEfforts,
+          serviceTiers: model.serviceTiers || [],
+          defaultServiceTier: model.defaultServiceTier ?? null,
         }));
         return { models, error: null };
       } catch (error) {

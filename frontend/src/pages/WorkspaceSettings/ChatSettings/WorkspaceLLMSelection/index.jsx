@@ -8,6 +8,7 @@ import RouterSelection from "./RouterSelection";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import paths from "@/utils/paths";
+import System from "@/models/system";
 
 // Some providers do not support model selection via /models.
 // In that case we allow the user to enter the model name manually and hope they
@@ -45,6 +46,10 @@ export default function WorkspaceLLMSelection({
   );
   const [searchQuery, setSearchQuery] = useState("");
   const [searchMenuOpen, setSearchMenuOpen] = useState(false);
+  const [selectedChatModel, setSelectedChatModel] = useState(
+    workspace?.chatModel || ""
+  );
+  const [codexModels, setCodexModels] = useState([]);
   const searchInputRef = useRef(null);
   const { t } = useTranslation();
   function updateLLMChoice(selection) {
@@ -69,6 +74,13 @@ export default function WorkspaceLLMSelection({
     );
     setFilteredLLMs(filtered);
   }, [LLMS, searchQuery, selectedLLM]);
+  useEffect(() => {
+    if (selectedLLM !== "codex-subscription") return;
+    System.customModels("codex-subscription").then(({ models = [] }) => {
+      setCodexModels(models);
+      setSelectedChatModel((current) => current || models[0]?.id || "");
+    });
+  }, [selectedLLM]);
   const selectedLLMObject = LLMS.find((llm) => llm.value === selectedLLM);
 
   return (
@@ -163,9 +175,10 @@ export default function WorkspaceLLMSelection({
         selectedLLM={selectedLLM}
         workspace={workspace}
         setHasChanges={setHasChanges}
+        setSelectedChatModel={setSelectedChatModel}
       />
       {selectedLLM === "codex-subscription" && (
-        <div className="flex flex-col gap-y-[8px]">
+        <div className="flex flex-col gap-y-[16px]">
           <label className="block input-label">Reasoning profile</label>
           <select
             name="chatReasoningEffort"
@@ -185,6 +198,36 @@ export default function WorkspaceLLMSelection({
               )
             )}
           </select>
+          <CodexSpeedSelector
+            models={codexModels}
+            modelId={selectedChatModel}
+            workspace={workspace}
+            setHasChanges={setHasChanges}
+          />
+          <label className="block input-label">Execution profile</label>
+          <select
+            name="codexExecutionMode"
+            defaultValue={workspace?.codexExecutionMode || "read-only"}
+            onChange={() => setHasChanges(true)}
+            className="border-none bg-theme-settings-input-bg text-white text-sm rounded-lg block w-full p-2.5"
+          >
+            <option value="read-only">Read-only</option>
+            <option value="workspace-write">Explicit workspace write</option>
+          </select>
+          <input
+            name="codexWorkspacePath"
+            defaultValue={workspace?.codexWorkspacePath || ""}
+            onChange={() => setHasChanges(true)}
+            placeholder="Absolute workspace/output directory"
+            className="border-none bg-theme-settings-input-bg text-white text-sm rounded-lg block w-full p-2.5"
+          />
+          <input
+            name="codexSkillsPath"
+            defaultValue={workspace?.codexSkillsPath || ""}
+            onChange={() => setHasChanges(true)}
+            placeholder="Absolute installed Codex skills directory"
+            className="border-none bg-theme-settings-input-bg text-white text-sm rounded-lg block w-full p-2.5"
+          />
         </div>
       )}
     </div>
@@ -192,7 +235,12 @@ export default function WorkspaceLLMSelection({
 }
 
 // TODO: Add this to agent selector as well as make generic component.
-function ModelSelector({ selectedLLM, workspace, setHasChanges }) {
+function ModelSelector({
+  selectedLLM,
+  workspace,
+  setHasChanges,
+  setSelectedChatModel,
+}) {
   if (selectedLLM === "anythingllm-router") {
     return (
       <RouterSelection workspace={workspace} setHasChanges={setHasChanges} />
@@ -228,7 +276,49 @@ function ModelSelector({ selectedLLM, workspace, setHasChanges }) {
       provider={selectedLLM}
       workspace={workspace}
       setHasChanges={setHasChanges}
+      setSelectedChatModel={setSelectedChatModel}
     />
+  );
+}
+
+export function CodexSpeedSelector({
+  models,
+  modelId,
+  workspace,
+  setHasChanges,
+}) {
+  const model = models.find((item) => item.id === modelId);
+  const serviceTiers = model?.serviceTiers;
+  const tiers = serviceTiers || [];
+  const [selectedTier, setSelectedTier] = useState(
+    workspace?.chatServiceTier || ""
+  );
+  useEffect(() => {
+    if (!tiers.some((tier) => tier.id === selectedTier)) setSelectedTier("");
+  }, [serviceTiers, selectedTier]);
+  return (
+    <div className="flex flex-col gap-y-[8px]">
+      <label className="block input-label">Speed</label>
+      <select
+        name="chatServiceTier"
+        value={selectedTier}
+        onChange={(event) => {
+          setSelectedTier(event.target.value);
+          setHasChanges(true);
+        }}
+        className="border-none bg-theme-settings-input-bg text-white text-sm rounded-lg block w-full p-2.5"
+      >
+        <option value="">
+          Default / Standard
+          {model?.defaultServiceTier ? ` (${model.defaultServiceTier})` : ""}
+        </option>
+        {tiers.map((tier) => (
+          <option key={tier.id} value={tier.id}>
+            {tier.name || tier.id}
+          </option>
+        ))}
+      </select>
+    </div>
   );
 }
 
