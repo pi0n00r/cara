@@ -4,6 +4,7 @@
 ; AI-NOTICE:Scope=file
 
 !macro customInit
+  IfFileExists "$INSTDIR\Cara.exe" 0 cara_preflight_done
   InitPluginsDir
   File /oname=$PLUGINSDIR\stop-cara-processes.ps1 "${PROJECT_DIR}\scripts\stop-cara-processes.ps1"
   nsExec::ExecToStack '"$SYSDIR\WindowsPowerShell\v1.0\powershell.exe" -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$PLUGINSDIR\stop-cara-processes.ps1" -InstallDir "$INSTDIR" -StorageDir "$APPDATA\anythingllm-desktop\storage"'
@@ -18,4 +19,5 @@
       Abort
     ${EndIf}
   ${EndIf}
+cara_preflight_done:
 !macroend
