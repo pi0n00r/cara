@@ -15,6 +15,7 @@ import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { assertCodexRuntime } from "./codex-runtime-layout.mjs";
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const desktopDir = path.resolve(scriptDir, "..");
@@ -84,15 +85,11 @@ const codexSource = path.join(
   codexPackageDir,
   "vendor",
   "x86_64-pc-windows-msvc",
-  "bin",
-  "codex.exe",
 );
-const codexTarget = path.join(runtimeDir, "codex", "codex.exe");
-if (!fs.existsSync(codexSource)) {
-  throw new Error(`Missing pinned Codex Windows runtime: ${codexSource}`);
-}
-fs.mkdirSync(path.dirname(codexTarget), { recursive: true });
-fs.copyFileSync(codexSource, codexTarget);
+const codexTarget = path.join(runtimeDir, "codex");
+assertCodexRuntime(codexSource, "Installed @openai/codex package");
+fs.cpSync(codexSource, codexTarget, { recursive: true });
+assertCodexRuntime(codexTarget, "Staged Cara runtime");
 
 const runtimeNode = path.join(
   nodeRuntimeSource,
@@ -144,7 +141,6 @@ for (const required of [
     "node",
     process.platform === "win32" ? "node.exe" : "bin/node",
   ),
-  codexTarget,
 ]) {
   if (!fs.existsSync(required))
     throw new Error(`Missing runtime asset: ${required}`);

@@ -51,6 +51,10 @@ jobs:
         shell: pwsh
         run: npm ci --prefix cara-desktop
 
+      - name: Test Codex runtime inventory
+        shell: pwsh
+        run: npm run test:codex-runtime --prefix cara-desktop
+
       - name: Acquire pinned Node runtime
         shell: pwsh
         run: |
@@ -79,7 +83,12 @@ jobs:
             'cara-desktop/runtime/server/public/_index.html',
             'cara-desktop/runtime/server/jobs',
             'cara-desktop/runtime/collector/node_modules',
-            'cara-desktop/runtime/codex/codex.exe'
+            'cara-desktop/runtime/codex/bin/codex.exe',
+            'cara-desktop/runtime/codex/bin/codex-code-mode-host.exe',
+            'cara-desktop/runtime/codex/codex-package.json',
+            'cara-desktop/runtime/codex/codex-path/rg.exe',
+            'cara-desktop/runtime/codex/codex-resources/codex-command-runner.exe',
+            'cara-desktop/runtime/codex/codex-resources/codex-windows-sandbox-setup.exe'
           )
           foreach ($path in $required) {
             if (-not (Test-Path $path)) { throw "Missing runtime asset: $path" }
@@ -139,6 +148,19 @@ jobs:
 
           Start-Process -FilePath $installer.FullName -ArgumentList '/S' -Wait
           if (-not (Test-Path $exe)) { throw 'Cara executable was not installed' }
+          $installedRuntime = Join-Path (Split-Path $exe) 'resources\runtime\codex'
+          $requiredCodex = @(
+            'bin\codex.exe',
+            'bin\codex-code-mode-host.exe',
+            'codex-package.json',
+            'codex-path\rg.exe',
+            'codex-resources\codex-command-runner.exe',
+            'codex-resources\codex-windows-sandbox-setup.exe'
+          )
+          foreach ($relativePath in $requiredCodex) {
+            $installedPath = Join-Path $installedRuntime $relativePath
+            if (-not (Test-Path $installedPath)) { throw "Missing installed Codex runtime asset: $installedPath" }
+          }
           if ((Get-FileHash -Algorithm SHA256 $envFile).Hash -ne $envHash) { throw '.env changed during preserved-profile install' }
           if ((Get-FileHash -Algorithm SHA256 $sentinel).Hash -ne $sentinelHash) { throw 'engine state changed during preserved-profile install' }
           Start-Process -FilePath $exe
