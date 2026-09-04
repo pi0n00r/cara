@@ -6,9 +6,6 @@
 [CmdletBinding()]
 param(
   [Parameter(Mandatory = $true)]
-  [string]$InstallDir,
-
-  [Parameter(Mandatory = $true)]
   [string]$StorageDir
 )
 
@@ -23,7 +20,6 @@ function Normalize-ProcessText([string]$Value) {
   return $Value.Replace('/', '\').ToLowerInvariant()
 }
 
-$installPrefix = Normalize-DirectoryPrefix $InstallDir
 $providerPrefix = Normalize-DirectoryPrefix (Join-Path $StorageDir 'providers')
 $targets = @()
 
@@ -31,15 +27,13 @@ foreach ($process in @(Get-CimInstance Win32_Process)) {
   if ($process.ProcessId -eq $PID) { continue }
 
   $name = Normalize-ProcessText ([string]$process.Name)
-  $executable = Normalize-ProcessText ([string]$process.ExecutablePath)
   $commandLine = Normalize-ProcessText ([string]$process.CommandLine)
 
-  $isInstalledRuntime = $executable.StartsWith($installPrefix)
   $isProviderSidecar =
     ($name -eq 'node.exe' -or $name -eq 'node') -and
     $commandLine.Contains($providerPrefix)
 
-  if ($isInstalledRuntime -or $isProviderSidecar) {
+  if ($isProviderSidecar) {
     $targets += $process
   }
 }

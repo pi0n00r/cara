@@ -21,7 +21,42 @@ permissions:
   contents: read
 
 jobs:
+  process-cleanup-smoke:
+    runs-on: windows-2025
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.14.0
+
+      - name: Stop only Cara-owned provider sidecars
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $storage = Join-Path $env:APPDATA 'anythingllm-desktop\storage'
+          $providerScript = Join-Path $storage 'providers\codex-cli\server.js'
+          $unrelatedScript = Join-Path $env:RUNNER_TEMP 'unrelated-node-service.js'
+          New-Item -ItemType Directory -Force -Path (Split-Path $providerScript) | Out-Null
+          'setInterval(() => {}, 60000);' | Set-Content -LiteralPath $providerScript -Encoding ascii
+          'setInterval(() => {}, 60000);' | Set-Content -LiteralPath $unrelatedScript -Encoding ascii
+          $sidecar = Start-Process -FilePath (Get-Command node.exe).Source -ArgumentList "`"$providerScript`"" -PassThru
+          $unrelated = Start-Process -FilePath (Get-Command node.exe).Source -ArgumentList "`"$unrelatedScript`"" -PassThru
+          try {
+            Start-Sleep -Seconds 1
+            & cara-desktop/scripts/stop-cara-processes.ps1 -StorageDir $storage
+            if ($LASTEXITCODE -ne 0) { throw "Cleanup failed: $LASTEXITCODE" }
+            $sidecar.Refresh()
+            $unrelated.Refresh()
+            if (-not $sidecar.HasExited) { throw 'Cara-owned provider sidecar survived cleanup' }
+            if ($unrelated.HasExited) { throw 'Cleanup terminated an unrelated Node process' }
+          } finally {
+            Stop-Process -Id $sidecar.Id,$unrelated.Id -Force -ErrorAction SilentlyContinue
+          }
+
   package-and-smoke:
+    needs: process-cleanup-smoke
     runs-on: windows-2025
     timeout-minutes: 90
     steps:
@@ -181,7 +216,6 @@ jobs:
 
           Write-Host '[Cleanup preflight] verifying the process filter directly'
           & cara-desktop/scripts/stop-cara-processes.ps1 `
-            -InstallDir (Split-Path $exe -Parent) `
             -StorageDir $storage
           if ($LASTEXITCODE -ne 0) { throw "Cleanup preflight failed: $LASTEXITCODE" }
           $sidecar.Refresh()
