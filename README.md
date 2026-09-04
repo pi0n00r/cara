@@ -25,8 +25,8 @@ capabilities while improving the paths we operate in production.
 ## Install Cara
 
 The current tested Windows build is
-[Cara 0.2.1](https://github.com/pi0n00r/cara/releases/tag/v0.2.1). Download
-`Cara-0.2.1-windows-x64.exe` and verify it against the adjacent SHA-256 file
+[Cara 0.2.2](https://github.com/pi0n00r/cara/releases/tag/v0.2.2). Download
+`Cara-0.2.2-windows-x64.exe` and verify it against the adjacent SHA-256 file
 before installation.
 
 Cara upgrades the existing AnythingLLM Desktop profile in place. It retains
@@ -69,11 +69,26 @@ tool execution. The Windows desktop package carries its own pinned Codex
 runtime and stores Cara's Codex sign-in under Cara's existing application
 storage, separate from unrelated Codex Desktop tasks and configuration.
 
+Codex chats remain read-only unless an operator explicitly selects the
+workspace-write profile and supplies existing absolute workspace/output and
+installed-skills directories. Codex app-server 0.153.0 requires a
+`selectedCapabilityRoots` environment location to reference a matching selected
+environment, so Cara selects the pinned protocol's `local` environment with the
+workspace as its `cwd`. The workspace-write sandbox grants writes only under
+that workspace; the skills capability root is available for discovery and
+reading and does not make the skills tree or Cara's private `CODEX_HOME`
+writable. Relative, blank, missing, and non-directory paths fail closed.
+
+Workspace speed choices also come from the selected model's advertised
+`serviceTiers`. Default/Standard omits `serviceTier` and inherits the catalog
+default; Cara does not assume or force a named priority tier.
+
 ## Version Guidance
 
 | Version | Status | Operator guidance |
 | --- | --- | --- |
-| `0.2.1` | Current tested build | Use this release for Codex subscription workspaces. It repairs the normal automatic workspace-agent initialization path and retains the LocalAI, LM Studio, Harmony, and preserved-profile work from earlier builds. Fully exit Cara and its provider sidecar before an in-place upgrade. |
+| `0.2.2` | Current tested build | Use this release for Codex subscription workspaces. It preserves the complete pinned Codex runtime needed for code mode and retains the provider, agent, Harmony, and preserved-profile corrections from earlier builds. Fully exit Cara and its provider sidecar before an in-place upgrade. |
+| `0.2.1` | Superseded | Do not install, promote, retag, or repackage. Its Windows package omitted Codex companion executables and resources. |
 | `0.2.0` | Superseded | Do not install, promote, retag, or repackage. Native sign-in, model discovery, and direct inference passed, but automatic workspace agents rejected `codex-subscription` during setup. The correction is in `0.2.1`. |
 | `0.1.0` | Historical foundation | Retained for provenance of the LocalAI, LM Studio, Harmony, and Windows packaging foundation. It predates the Codex subscription provider; use a current release instead. |
 

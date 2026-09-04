@@ -22,8 +22,13 @@ class CodexSubscriptionProvider extends Provider {
       config.reasoningEffort ||
       process.env.CODEX_SUBSCRIPTION_REASONING_EFFORT ||
       "max";
+    this.serviceTier = config.serviceTier || null;
     this.llm = new CodexSubscriptionLLM(null, this.model, {
       reasoningEffort: this.reasoningEffort,
+      serviceTier: this.serviceTier,
+      executionMode: config.executionMode,
+      workspacePath: config.workspacePath,
+      skillsPath: config.skillsPath,
     });
   }
 

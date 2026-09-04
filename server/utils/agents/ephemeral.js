@@ -524,6 +524,10 @@ class EphemeralAgentHandler extends AgentHandler {
         this.#workspace?.chatReasoningEffort ||
         process.env.CODEX_SUBSCRIPTION_REASONING_EFFORT ||
         "max",
+      serviceTier: this.#workspace?.chatServiceTier,
+      executionMode: this.#workspace?.codexExecutionMode,
+      workspacePath: this.#workspace?.codexWorkspacePath,
+      skillsPath: this.#workspace?.codexSkillsPath,
       chats: await this.#chatHistory(20),
       handlerProps: {
         invocation: {

@@ -9,6 +9,13 @@ const mockModels = jest.fn();
 const mockAccount = jest.fn();
 const mockListeners = new Map();
 
+jest.mock("../../../../utils/EmbeddingEngines/native", () => ({
+  NativeEmbedder: class NativeEmbedder {},
+}));
+jest.mock("../../../../utils/helpers/chat/responses", () => ({
+  writeResponseChunk: jest.fn(),
+}));
+
 jest.mock("../../../../utils/AiProviders/codexSubscription/client", () => ({
   codexAppServer: {
     account: (...args) => mockAccount(...args),
@@ -33,14 +40,21 @@ describe("CodexSubscriptionLLM", () => {
         id: "gpt-5.6-sol",
         model: "gpt-5.6-sol",
         supportedReasoningEfforts: [{ reasoningEffort: "max" }],
+        serviceTiers: [{ id: "fast", name: "Fast" }],
       },
     ]);
     mockRequest.mockImplementation(async (method) => {
       if (method === "thread/start") return { thread: { id: "thread-1" } };
       if (method === "turn/start") {
         queueMicrotask(() => {
-          mockListeners.get("item/agentMessage/delta")?.({ threadId: "thread-1", delta: "Sol" });
-          mockListeners.get("turn/completed")?.({ threadId: "thread-1", turn: { status: "completed", items: [] } });
+          mockListeners.get("item/agentMessage/delta")?.({
+            threadId: "thread-1",
+            delta: "Sol",
+          });
+          mockListeners.get("turn/completed")?.({
+            threadId: "thread-1",
+            turn: { status: "completed", items: [] },
+          });
         });
         return { turn: { id: "turn-1" } };
       }
@@ -51,7 +65,9 @@ describe("CodexSubscriptionLLM", () => {
     const provider = new CodexSubscriptionLLM({}, "gpt-5.6-sol", {
       reasoningEffort: "max",
     });
-    const result = await provider.getChatCompletion([{ role: "user", content: "hello" }]);
+    const result = await provider.getChatCompletion([
+      { role: "user", content: "hello" },
+    ]);
     expect(result.textResponse).toBe("Sol");
     expect(mockRequest).toHaveBeenCalledWith(
       "turn/start",
@@ -65,6 +81,38 @@ describe("CodexSubscriptionLLM", () => {
     });
     await expect(provider.getChatCompletion([])).rejects.toThrow(
       "ultra reasoning is unavailable"
+    );
+  });
+
+  it("omits inherited speed and keeps arbitrary advertised speed on both starts", async () => {
+    await new CodexSubscriptionLLM({}, "gpt-5.6-sol", {
+      reasoningEffort: "max",
+    }).getChatCompletion([]);
+    expect(
+      mockRequest.mock.calls.find(([method]) => method === "thread/start")[1]
+    ).not.toHaveProperty("serviceTier");
+    mockRequest.mockClear();
+    await new CodexSubscriptionLLM({}, "gpt-5.6-sol", {
+      reasoningEffort: "max",
+      serviceTier: "fast",
+    }).getChatCompletion([]);
+    expect(mockRequest).toHaveBeenCalledWith(
+      "thread/start",
+      expect.objectContaining({ serviceTier: "fast" })
+    );
+    expect(mockRequest).toHaveBeenCalledWith(
+      "turn/start",
+      expect.objectContaining({ serviceTier: "fast" })
+    );
+  });
+
+  it("rejects an unadvertised service tier", async () => {
+    const provider = new CodexSubscriptionLLM({}, "gpt-5.6-sol", {
+      reasoningEffort: "max",
+      serviceTier: "priority",
+    });
+    await expect(provider.getChatCompletion([])).rejects.toThrow(
+      "not advertised"
     );
   });
 });

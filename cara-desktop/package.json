@@ -1,6 +1,6 @@
 {
   "name": "cara-desktop",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Cara local-first desktop shell",
   "main": "main.cjs",
   "author": "Gary Bajaj",
@@ -8,6 +8,7 @@
   "private": true,
   "scripts": {
     "stage": "node scripts/stage-runtime.mjs",
+    "test:codex-runtime": "node --test scripts/codex-runtime-layout.test.mjs",
     "build:win": "npm run stage && electron-builder --win nsis --x64 --publish never"
   },
   "devDependencies": {
