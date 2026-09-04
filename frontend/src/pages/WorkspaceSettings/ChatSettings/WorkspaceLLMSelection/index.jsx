@@ -78,7 +78,11 @@ export default function WorkspaceLLMSelection({
     if (selectedLLM !== "codex-subscription") return;
     System.customModels("codex-subscription").then(({ models = [] }) => {
       setCodexModels(models);
-      setSelectedChatModel((current) => current || models[0]?.id || "");
+      setSelectedChatModel((current) =>
+        models.some((model) => model.id === current)
+          ? current
+          : models[0]?.id || ""
+      );
     });
   }, [selectedLLM]);
   const selectedLLMObject = LLMS.find((llm) => llm.value === selectedLLM);
