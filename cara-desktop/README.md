@@ -32,6 +32,11 @@ MCP configuration, provider credentials, workspace prompts, corpus pointers,
 and downloaded engine state remain in place. Uninstalling Cara also preserves
 the directory.
 
+Before an in-place upgrade, fully exit Cara and stop any residual Cara provider
+sidecar running from the `storage\providers` tree. A surviving sidecar can keep
+the old installation open and prevent its silent removal. Fresh installations
+are unaffected.
+
 ## Harmony Opt-In
 
 Add these settings to the preserved `.env` only when using a compatible

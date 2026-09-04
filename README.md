@@ -32,7 +32,9 @@ before installation.
 Cara upgrades the existing AnythingLLM Desktop profile in place. It retains
 workspaces, documents, database state, MCP configuration, provider settings,
 and model storage under `%APPDATA%\anythingllm-desktop\storage`. Keep that
-directory when replacing or repairing the application.
+directory when replacing or repairing the application. Before an in-place
+upgrade, fully exit Cara and stop any remaining Cara provider-sidecar process;
+otherwise Windows may be unable to remove the prior application version.
 
 ## Fork Direction
 
@@ -71,7 +73,7 @@ storage, separate from unrelated Codex Desktop tasks and configuration.
 
 | Version | Status | Operator guidance |
 | --- | --- | --- |
-| `0.2.1` | Current tested build | Use this release for Codex subscription workspaces. It repairs the normal automatic workspace-agent initialization path and retains the LocalAI, LM Studio, Harmony, and preserved-profile work from earlier builds. |
+| `0.2.1` | Current tested build | Use this release for Codex subscription workspaces. It repairs the normal automatic workspace-agent initialization path and retains the LocalAI, LM Studio, Harmony, and preserved-profile work from earlier builds. Fully exit Cara and its provider sidecar before an in-place upgrade. |
 | `0.2.0` | Superseded | Do not install, promote, retag, or repackage. Native sign-in, model discovery, and direct inference passed, but automatic workspace agents rejected `codex-subscription` during setup. The correction is in `0.2.1`. |
 | `0.1.0` | Historical foundation | Retained for provenance of the LocalAI, LM Studio, Harmony, and Windows packaging foundation. It predates the Codex subscription provider; use a current release instead. |
 
