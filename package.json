@@ -1,6 +1,6 @@
 {
   "name": "anything-llm",
-  "version": "1.16.1",
+  "version": "1.17.0",
   "description": "Cara is a local-first agent workspace for self-hosted models, tools, and knowledge.",
   "main": "index.js",
   "type": "module",
