@@ -16,6 +16,7 @@ const { EncryptionManager } = require("../EncryptionManager");
 const { CommunicationKey } = require("../comKey");
 const eagerLoadContextWindows = require("./eagerLoadContextWindows");
 const markOnboarded = require("./markOnboarded");
+const migrateWebBrowsingToDefault = require("./migrateWebBrowsingToDefault");
 const { PushNotifications } = require("../PushNotifications");
 const { TelegramBotService } = require("../telegramBot");
 
@@ -42,6 +43,7 @@ function bootSSL(app, port = 3001) {
 
     server
       .listen(port, process.env.SERVER_HOST || undefined, async () => {
+        await migrateWebBrowsingToDefault(); // must run before markOnboarded() so a fresh instance is not mistaken for an existing one.
         await markOnboarded();
         new CommunicationKey(true);
         new EncryptionManager();
@@ -74,6 +76,7 @@ function bootHTTP(app, port = 3001) {
 
   app
     .listen(port, process.env.SERVER_HOST || undefined, async () => {
+      await migrateWebBrowsingToDefault(); // must run before markOnboarded() so a fresh instance is not mistaken for an existing one.
       await markOnboarded();
       new CommunicationKey(true);
       new EncryptionManager();

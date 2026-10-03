@@ -54,6 +54,7 @@ const TRANSLATIONS = {
     "workspaces-name": "Nome delle aree di lavoro",
     selection: "Selezione del modello",
     saving: "Salvo...",
+    saved: "Salvato",
     save: "Salva modifiche",
     previous: "Pagina precedente",
     next: "Pagina successiva",
@@ -68,6 +69,7 @@ const TRANSLATIONS = {
     stopped: "Fermato",
     loading: "Caricamento",
     refresh: "Aggiorna",
+    noResults: "Nessun risultato trovato",
   },
   settings: {
     title: "Impostazioni istanza",
@@ -94,8 +96,7 @@ const TRANSLATIONS = {
     "experimental-features": "Caratteristiche sperimentali",
     contact: "Contatta il Supporto",
     "browser-extension": "Estensione del browser",
-    "system-prompt-variables":
-      "Variabili delle variabili del sistema\n\nVariabili delle variabili del sistema",
+    "system-prompt-variables": "Variabili del prompt di sistema",
     interface: "Preferenze dell'interfaccia utente",
     branding: "Branding e personalizzazione",
     chat: "Chat",
@@ -111,7 +112,7 @@ const TRANSLATIONS = {
       telegram: "Telegram",
     },
     "scheduled-jobs": "Lavori pianificati",
-    "model-router": "Router di esempio",
+    "model-router": "Router dei modelli",
     "image-generation": "Generazione di immagini",
   },
   login: {
@@ -204,7 +205,7 @@ const TRANSLATIONS = {
       },
     },
     history: {
-      title: "Chat History",
+      title: "Cronologia della chat",
       "desc-start":
         "Numero di chat precedenti che verranno incluse nella memoria a breve termine della risposta.",
       recommend: "Recommend 20. ",
@@ -241,6 +242,22 @@ const TRANSLATIONS = {
       title: "Temperatura LLM",
       "desc-end":
         "Più alto è il numero, più è creativo. Per alcuni modelli questo può portare a risposte incoerenti se troppo elevato.",
+      placeholder: "Predefinito del provider",
+    },
+    reasoning_effort: {
+      title: "Sforzo di ragionamento",
+      default: "Predefinito del provider",
+      cannot_disable: "Questo modello non può disattivare il ragionamento.",
+      levels: {
+        off: "Disattivato",
+        on: "Attivato",
+        minimal: "Minimo",
+        low: "Basso",
+        medium: "Medio",
+        high: "Alto",
+        xhigh: "Molto alto",
+        max: "Massimo",
+      },
     },
   },
   "vector-workspace": {
@@ -321,8 +338,6 @@ const TRANSLATIONS = {
         description:
           "Permetti al tuo agente di utilizzare SQL per rispondere alle tue domande, collegandosi a diversi fornitori di database SQL.",
       },
-      default_skill:
-        "Per impostazione predefinita, questa funzionalità è attiva, ma è possibile disabilitarla se non si desidera che sia disponibile per l'agente.",
       filesystem: {
         title: "Accesso al file system",
         description:
@@ -344,7 +359,7 @@ const TRANSLATIONS = {
             description: "Apri e leggi più file contemporaneamente.",
           },
           "list-directory": {
-            title: "Elenco di contatti",
+            title: "Elenca contenuto della cartella",
             description:
               "Elenca i file e le directory all'interno di una cartella.",
           },
@@ -506,7 +521,7 @@ const TRANSLATIONS = {
               "Rispondere immediatamente a una conversazione via email.",
           },
           markRead: {
-            title: "Mark Read",
+            title: "Segna come letto",
             description: "Segna un thread come letto",
           },
           markUnread: {
@@ -555,7 +570,7 @@ const TRANSLATIONS = {
         clientId: "ID del cliente (richiesta)",
         clientIdHelp:
           "L'ID dell'applicazione (Client ID) dal registro della tua app in Azure AD.",
-        tenantId: "ID del locatore",
+        tenantId: "ID directory (tenant)",
         tenantIdHelp:
           "L'ID del \"Tenant\" (inquilino) dal registro della tua applicazione Azure AD. È necessario solo per l'autenticazione all'interno di un'organizzazione.",
         clientSecret: "Chiave segreta del cliente",
@@ -1468,6 +1483,35 @@ const TRANSLATIONS = {
       uploadDocument: "Caricare un documento",
     },
     greeting: "Come posso aiutarti oggi?",
+    greetings: {
+      anytime: {
+        working_on: "Su cosa stiamo lavorando?",
+        on_your_mind: "A cosa stai pensando?",
+        where_to_start: "Da dove iniziamo?",
+        ready: "Pronto quando lo sei tu.",
+        think_it_through: "Ragioniamoci su.",
+      },
+      morning: {
+        good_morning: "Buongiorno",
+        first_today: "Buongiorno. Da cosa iniziamo oggi?",
+        fresh_start: "Un nuovo inizio. Da dove partiamo?",
+      },
+      afternoon: {
+        good_afternoon: "Buon pomeriggio",
+        tackling: "Buon pomeriggio. Di cosa ci occupiamo?",
+        next_on_list: "Qual è il prossimo punto della lista?",
+        keep_moving: "Andiamo avanti.",
+      },
+      evening: {
+        good_evening: "Buonasera",
+        finish_strong: "Buonasera. Chiudiamo in bellezza.",
+      },
+      night: {
+        midnight_oil: "Lavori fino a tardi?",
+        late_one: "Serata lunga? Ragioniamoci su.",
+        still_up: "Ancora al lavoro? Pronto quando lo sei tu.",
+      },
+    },
   },
   "keyboard-shortcuts": {
     title: "Combinazioni di tasti",

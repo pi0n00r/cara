@@ -22,8 +22,18 @@ async function userCanToggleTools(userId = null) {
   return user?.role === ROLES.admin;
 }
 
+/**
+ * Returns the timeout in ms for agent tool-call approval prompts.
+ * Reads from `TOOL_CALL_APPROVAL_TIMEOUT_MS` env var; defaults to 120 000 ms (2 min).
+ * @returns {number}
+ */
+function toolApprovalTimeoutMs() {
+  const envVal = Number(process.env.TOOL_CALL_APPROVAL_TIMEOUT_MS);
+  return Number.isFinite(envVal) && envVal > 0 ? envVal : 120_000;
+}
+
 const SOCKET_TIMEOUT_MS = 300 * 1_000; // 5 mins
-const TOOL_APPROVAL_TIMEOUT_MS = 120 * 1_000; // 2 mins for tool approval
+const TOOL_APPROVAL_TIMEOUT_MS = toolApprovalTimeoutMs();
 const CLARIFICATION_DEFAULT_TIMEOUT_MS = 120 * 1_000; // 2 mins for clarifying questions
 
 /**
@@ -425,15 +435,17 @@ const websocket = {
         });
 
         aibitat.onInterrupt(async (node) => {
-          const { feedback, attachments } = await socket.askForFeedback(
-            socket,
-            node
-          );
+          const { feedback, attachments, reasoningEffort } =
+            await socket.askForFeedback(socket, node);
           if (WEBSOCKET_BAIL_COMMANDS.includes(feedback)) {
             socket.close();
             return;
           }
 
+          // The chat session's reasoning effort can change between messages -
+          // apply it before the agent's next turn.
+          if (reasoningEffort !== undefined)
+            await aibitat.updateReasoningEffort?.(reasoningEffort);
           await aibitat.continue(feedback, attachments);
         });
 
@@ -469,8 +481,8 @@ const websocket = {
               };
 
               socket.handleFeedback = async (message) => {
-                const data = JSON.parse(message);
-                if (data.type !== "awaitingFeedback") return;
+                const data = safeJsonParse(message, null);
+                if (!data || data.type !== "awaitingFeedback") return;
 
                 // Intercept the /img slash command so it generates an image
                 // inline instead of being sent to the agent as a normal prompt.
@@ -494,6 +506,9 @@ const websocket = {
                     ...pendingImageAttachments,
                     ...(data.attachments || []),
                   ],
+                  // Undefined when the client did not send one, so the
+                  // current effort is kept.
+                  reasoningEffort: data.reasoningEffort,
                 });
                 return;
               };
