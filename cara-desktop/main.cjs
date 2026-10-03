@@ -116,7 +116,7 @@ function runMigrations(nodeExecutable, serverDir, env) {
     [prismaCli, "migrate", "deploy", "--schema", schema],
     {
       cwd: serverDir,
-      env,
+      env: { ...env, RUST_LOG: env.RUST_LOG || "info" },
       encoding: "utf8",
       windowsHide: true,
     },
