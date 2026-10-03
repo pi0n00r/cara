@@ -161,7 +161,13 @@ function getLLMProvider({
   skillsPath = null,
 } = {}) {
   const connector = getLLMProviderConnector({
-    provider, model, reasoningEffort, serviceTier, executionMode, workspacePath, skillsPath,
+    provider,
+    model,
+    reasoningEffort,
+    serviceTier,
+    executionMode,
+    workspacePath,
+    skillsPath,
   });
   connector.temperature = resolveTemperature(
     provider ?? process.env.LLM_PROVIDER ?? "openai",

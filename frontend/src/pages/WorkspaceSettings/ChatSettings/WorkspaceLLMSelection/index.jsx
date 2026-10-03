@@ -42,12 +42,18 @@ export default function WorkspaceLLMSelection({ settings, workspace }) {
   );
   const { markDirty, save } = useAutosaveForm();
   const [codexModels, setCodexModels] = useState([]);
-  const [selectedChatModel, setSelectedChatModel] = useState(workspace?.chatModel || "");
+  const [selectedChatModel, setSelectedChatModel] = useState(
+    workspace?.chatModel || ""
+  );
   useEffect(() => {
     if (selectedLLM !== "codex-subscription") return;
     System.customModels("codex-subscription").then(({ models = [] }) => {
       setCodexModels(models);
-      setSelectedChatModel((current) => models.some((model) => model.id === current) ? current : models[0]?.id || "");
+      setSelectedChatModel((current) =>
+        models.some((model) => model.id === current)
+          ? current
+          : models[0]?.id || ""
+      );
     });
   }, [selectedLLM]);
   useEffect(() => {
@@ -99,20 +105,70 @@ export default function WorkspaceLLMSelection({ settings, workspace }) {
       {selectedLLM === "codex-subscription" ? (
         <>
           <label className="block input-label">Chat model</label>
-          <select name="chatModel" value={selectedChatModel} onChange={(event) => { setSelectedChatModel(event.target.value); markDirty("chatModel"); }} className="border-none bg-theme-settings-input-bg text-white text-sm rounded-lg block w-full p-2.5">
-            {codexModels.map((model) => <option key={model.id} value={model.id}>{model.name || model.id}</option>)}
+          <select
+            name="chatModel"
+            value={selectedChatModel}
+            onChange={(event) => {
+              setSelectedChatModel(event.target.value);
+              markDirty("chatModel");
+            }}
+            className="border-none bg-theme-settings-input-bg text-white text-sm rounded-lg block w-full p-2.5"
+          >
+            {codexModels.map((model) => (
+              <option key={model.id} value={model.id}>
+                {model.name || model.id}
+              </option>
+            ))}
           </select>
           <label className="block input-label">Reasoning profile</label>
-          <select name="chatReasoningEffort" defaultValue={workspace?.chatReasoningEffort || settings?.CodexSubscriptionReasoningEffort || "max"} onChange={() => markDirty("chatReasoningEffort")} className="border-none bg-theme-settings-input-bg text-white text-sm rounded-lg block w-full p-2.5">
-            {["low", "medium", "high", "xhigh", "max", "ultra"].map((effort) => <option key={effort} value={effort}>{effort}</option>)}
+          <select
+            name="chatReasoningEffort"
+            defaultValue={
+              workspace?.chatReasoningEffort ||
+              settings?.CodexSubscriptionReasoningEffort ||
+              "max"
+            }
+            onChange={() => markDirty("chatReasoningEffort")}
+            className="border-none bg-theme-settings-input-bg text-white text-sm rounded-lg block w-full p-2.5"
+          >
+            {["low", "medium", "high", "xhigh", "max", "ultra"].map(
+              (effort) => (
+                <option key={effort} value={effort}>
+                  {effort}
+                </option>
+              )
+            )}
           </select>
-          <CodexSpeedSelector models={codexModels} modelId={selectedChatModel} workspace={workspace} markDirty={markDirty} />
+          <CodexSpeedSelector
+            models={codexModels}
+            modelId={selectedChatModel}
+            workspace={workspace}
+            markDirty={markDirty}
+          />
           <label className="block input-label">Execution profile</label>
-          <select name="codexExecutionMode" defaultValue={workspace?.codexExecutionMode || "read-only"} onChange={() => markDirty("codexExecutionMode")} className="border-none bg-theme-settings-input-bg text-white text-sm rounded-lg block w-full p-2.5">
-            <option value="read-only">Read-only</option><option value="workspace-write">Explicit workspace write</option>
+          <select
+            name="codexExecutionMode"
+            defaultValue={workspace?.codexExecutionMode || "read-only"}
+            onChange={() => markDirty("codexExecutionMode")}
+            className="border-none bg-theme-settings-input-bg text-white text-sm rounded-lg block w-full p-2.5"
+          >
+            <option value="read-only">Read-only</option>
+            <option value="workspace-write">Explicit workspace write</option>
           </select>
-          <input name="codexWorkspacePath" defaultValue={workspace?.codexWorkspacePath || ""} onChange={() => markDirty("codexWorkspacePath")} placeholder="Absolute workspace/output directory" className="border-none bg-theme-settings-input-bg text-white text-sm rounded-lg block w-full p-2.5" />
-          <input name="codexSkillsPath" defaultValue={workspace?.codexSkillsPath || ""} onChange={() => markDirty("codexSkillsPath")} placeholder="Absolute installed Codex skills directory" className="border-none bg-theme-settings-input-bg text-white text-sm rounded-lg block w-full p-2.5" />
+          <input
+            name="codexWorkspacePath"
+            defaultValue={workspace?.codexWorkspacePath || ""}
+            onChange={() => markDirty("codexWorkspacePath")}
+            placeholder="Absolute workspace/output directory"
+            className="border-none bg-theme-settings-input-bg text-white text-sm rounded-lg block w-full p-2.5"
+          />
+          <input
+            name="codexSkillsPath"
+            defaultValue={workspace?.codexSkillsPath || ""}
+            onChange={() => markDirty("codexSkillsPath")}
+            placeholder="Absolute installed Codex skills directory"
+            className="border-none bg-theme-settings-input-bg text-white text-sm rounded-lg block w-full p-2.5"
+          />
         </>
       ) : (
         <ModelSelector
@@ -187,16 +243,33 @@ function FreeFormLLMInput({ workspace }) {
 export function CodexSpeedSelector({ models, modelId, workspace, markDirty }) {
   const model = models.find((item) => item.id === modelId);
   const tiers = model?.serviceTiers || [];
-  const [selectedTier, setSelectedTier] = useState(workspace?.chatServiceTier || "");
+  const [selectedTier, setSelectedTier] = useState(
+    workspace?.chatServiceTier || ""
+  );
   useEffect(() => {
     if (!tiers.some((tier) => tier.id === selectedTier)) setSelectedTier("");
   }, [modelId, tiers, selectedTier]);
   return (
     <div className="flex flex-col gap-y-[8px]">
       <label className="block input-label">Speed</label>
-      <select name="chatServiceTier" value={selectedTier} onChange={(event) => { setSelectedTier(event.target.value); markDirty("chatServiceTier"); }} className="border-none bg-theme-settings-input-bg text-white text-sm rounded-lg block w-full p-2.5">
-        <option value="">Default / Standard{model?.defaultServiceTier ? ` (${model.defaultServiceTier})` : ""}</option>
-        {tiers.map((tier) => <option key={tier.id} value={tier.id}>{tier.name || tier.id}</option>)}
+      <select
+        name="chatServiceTier"
+        value={selectedTier}
+        onChange={(event) => {
+          setSelectedTier(event.target.value);
+          markDirty("chatServiceTier");
+        }}
+        className="border-none bg-theme-settings-input-bg text-white text-sm rounded-lg block w-full p-2.5"
+      >
+        <option value="">
+          Default / Standard
+          {model?.defaultServiceTier ? ` (${model.defaultServiceTier})` : ""}
+        </option>
+        {tiers.map((tier) => (
+          <option key={tier.id} value={tier.id}>
+            {tier.name || tier.id}
+          </option>
+        ))}
       </select>
     </div>
   );

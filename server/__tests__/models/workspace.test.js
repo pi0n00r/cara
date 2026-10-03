@@ -438,6 +438,8 @@ describe("Workspace.update", () => {
     expect(Workspace._update).toHaveBeenCalledWith(1, {
       chatProvider: null,
       chatModel: null,
+      chatReasoningEffort: null,
+      chatServiceTier: null,
       router_id: null,
     });
   });
@@ -447,6 +449,8 @@ describe("Workspace.update", () => {
     expect(Workspace._update).toHaveBeenCalledWith(1, {
       chatProvider: null,
       chatModel: null,
+      chatReasoningEffort: null,
+      chatServiceTier: null,
       router_id: null,
     });
   });
