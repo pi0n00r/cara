@@ -627,6 +627,7 @@ function systemEndpoints(app) {
           // Password is being disabled so directly unset everything to bypass validation.
           process.env.AUTH_TOKEN = "";
           process.env.JWT_SECRET = "";
+          if (process.env.NODE_ENV === "production") dumpENV();
         } else {
           // An all-asterisk value is indistinguishable from the UI's masked
           // placeholder, so updateENV would silently drop it while JWT_SECRET
@@ -1309,7 +1310,7 @@ function systemEndpoints(app) {
       if (username !== sessionUser.username)
         updates.username = User.validations.username(String(username));
       if (password) updates.password = String(password);
-      if (bio) updates.bio = String(bio);
+      if (bio || bio === "") updates.bio = String(bio);
 
       if (Object.keys(updates).length === 0) {
         response

@@ -116,7 +116,7 @@ function apiOpenAICompatibleEndpoints(app) {
         if (!workspace) return response.status(401).end();
 
         const userMessage = messages.pop();
-        if (userMessage.role !== "user") {
+        if (userMessage?.role !== "user") {
           return response.status(400).json({
             id: uuidv4(),
             type: "abort",
@@ -129,7 +129,9 @@ function apiOpenAICompatibleEndpoints(app) {
         }
 
         const systemPrompt =
-          messages.find((chat) => chat.role === "system")?.content ?? null;
+          extractTextContent(
+            messages.find((chat) => chat.role === "system")?.content
+          ) ?? null;
         const history = messages.filter((chat) => chat.role !== "system") ?? [];
 
         if (!stream) {
@@ -139,7 +141,7 @@ function apiOpenAICompatibleEndpoints(app) {
             history,
             prompt: extractTextContent(userMessage.content),
             attachments: extractAttachments(userMessage.content),
-            temperature: Number(temperature),
+            temperature,
           });
 
           await Telemetry.sendTelemetry("sent_chat", {
@@ -168,7 +170,7 @@ function apiOpenAICompatibleEndpoints(app) {
           history,
           prompt: extractTextContent(userMessage.content),
           attachments: extractAttachments(userMessage.content),
-          temperature: Number(temperature),
+          temperature,
           response,
         });
         await Telemetry.sendTelemetry("sent_chat", {
