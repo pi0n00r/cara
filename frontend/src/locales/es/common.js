@@ -296,6 +296,8 @@ const TRANSLATIONS = {
         max: "Máximo",
       },
     },
+    token_limit_reached:
+      "La respuesta alcanzó el límite máximo de tokens de salida. Aumente el número máximo de tokens de salida del modelo para permitir respuestas más largas.",
   },
   "vector-workspace": {
     identifier: "Identificador de la base de datos vectorial",
@@ -810,7 +812,7 @@ const TRANSLATIONS = {
       "start-server": "Iniciar el servidor MCP",
       "delete-server": "Eliminar el servidor MCP",
       "tool-count-warning":
-        "Este servidor de MCP tiene <b> herramientas habilitadas</b> que consumirán contexto en cada conversación.<br /> Considere desactivar las herramientas no deseadas para ahorrar contexto.",
+        "Este servidor de MCP tiene <b>{{count}} herramientas habilitadas</b> que consumirán contexto en cada conversación.<br />Considere desactivar las herramientas no deseadas para ahorrar contexto.",
       "startup-command": "Comando inicial",
       command: "Órden",
       arguments: "Argumentos",

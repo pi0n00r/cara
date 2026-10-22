@@ -229,12 +229,12 @@ class AnthropicProvider extends Provider {
   // so that the call can run correctly.
   #formatFunctions(functions = []) {
     return functions.map((func) => {
-      const { name, description, parameters, required } = func;
+      const { name, description, parameters } = func;
       // Some MCP tools (e.g. Pydantic v2 nested models) describe their parameters
       // with `$ref`/`$defs`. Anthropic's `input_schema` does not resolve local
       // references, so we inline them here - otherwise the dangling pointer crashes
       // the tool call. Flat schemas are left unchanged. See issue #3938.
-      const { type, properties } = dereferenceSchema(parameters);
+      const { type, properties, required } = dereferenceSchema(parameters);
       return {
         name,
         description,
@@ -271,12 +271,16 @@ class AnthropicProvider extends Provider {
           messages: chats,
           stream: true,
           ...(Array.isArray(functions) && functions?.length > 0
-            ? { tools: this.#formatFunctions(functions) }
+            ? {
+                tools: this.#formatFunctions(functions),
+                tool_choice: { type: "auto", disable_parallel_tool_use: true },
+              }
             : {}),
           ...this.reasoningConfig,
         },
         { headers: { "anthropic-beta": "tools-2024-04-04" } } // Required to we can use tools.
       );
+      this.watchTokenLimit(response);
 
       const result = {
         functionCall: null,
@@ -419,12 +423,16 @@ class AnthropicProvider extends Provider {
           messages: chats,
           stream: false,
           ...(Array.isArray(functions) && functions?.length > 0
-            ? { tools: this.#formatFunctions(functions) }
+            ? {
+                tools: this.#formatFunctions(functions),
+                tool_choice: { type: "auto", disable_parallel_tool_use: true },
+              }
             : {}),
           ...this.reasoningConfig,
         },
         { headers: { "anthropic-beta": "tools-2024-04-04" } } // Required to we can use tools.
       );
+      this.watchTokenLimit(response);
 
       // Record usage from response (Anthropic uses input_tokens/output_tokens)
       if (response.usage) this.recordUsage(response.usage);

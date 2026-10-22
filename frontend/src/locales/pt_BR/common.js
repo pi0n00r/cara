@@ -293,6 +293,8 @@ const TRANSLATIONS = {
         max: "Máximo",
       },
     },
+    token_limit_reached:
+      "A resposta atingiu o limite máximo de tokens de saída. Aumente o limite máximo de tokens de saída do modelo para permitir respostas mais longas.",
   },
   "vector-workspace": {
     identifier: "Identificador do banco de dados",
@@ -1332,7 +1334,7 @@ const TRANSLATIONS = {
     workspace_llm_manager: {
       search: "Buscar provedores de LLM",
       loading_workspace_settings: "Carregando configurações do workspace...",
-      available_models: "Modelos Disponíveis",
+      available_models: "Modelos Disponíveis para {{provider}}",
       available_models_description: "Selecione um modelo para este workspace",
       save: "Salvar modelo do workspace",
       saving: "Salvando...",
@@ -1466,11 +1468,11 @@ const TRANSLATIONS = {
     update_account: "Atualizar conta",
     theme: "Preferência de tema",
     language: "Idioma preferido",
-    failed_upload: "Falha no upload da foto de perfil",
+    failed_upload: "Falha no upload da foto de perfil: {{error}}",
     upload_success: "Foto de perfil atualizada com sucesso",
-    failed_remove: "Falha ao remover foto de perfil",
+    failed_remove: "Falha ao remover foto de perfil: {{error}}",
     profile_updated: "Perfil atualizado com sucesso",
-    failed_update_user: "Falha ao atualizar perfil do usuário",
+    failed_update_user: "Falha ao atualizar perfil do usuário: {{error}}",
     account: "Conta",
     support: "Suporte",
     signout: "Sair",

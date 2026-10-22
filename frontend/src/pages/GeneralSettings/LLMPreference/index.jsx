@@ -82,6 +82,7 @@ import LlmmanOptions from "@/components/LLMSelection/LlmmanOptions";
 import PrivateModeOptions from "@/components/LLMSelection/PrivateModeOptions";
 import SambaNovaOptions from "@/components/LLMSelection/SambaNovaOptions";
 import LemonadeOptions from "@/components/LLMSelection/LemonadeOptions";
+import { withEmbeddedLemonade } from "@/components/LLMSelection/EmbeddedLemonadeOptions";
 import MinimaxOptions from "@/components/LLMSelection/MinimaxOptions";
 import CerebrasLLMOptions from "@/components/LLMSelection/CerebrasLLMOptions";
 
@@ -511,9 +512,8 @@ export default function GeneralLLMPreference() {
     };
   }, []);
 
-  const selectedLLMObject = AVAILABLE_LLM_PROVIDERS.find(
-    (llm) => llm.value === selectedLLM
-  );
+  const providers = withEmbeddedLemonade(AVAILABLE_LLM_PROVIDERS, settings);
+  const selectedLLMObject = providers.find((llm) => llm.value === selectedLLM);
   return (
     <div className="w-screen h-screen overflow-hidden bg-theme-bg-container flex">
       <Sidebar />
@@ -558,7 +558,7 @@ export default function GeneralLLMPreference() {
               </div>
               <div className="relative">
                 <ProviderSearchMenu
-                  items={AVAILABLE_LLM_PROVIDERS}
+                  items={providers}
                   selected={
                     selectedLLMObject ?? {
                       name: "None selected",
@@ -587,9 +587,9 @@ export default function GeneralLLMPreference() {
                 className="mt-4 flex flex-col gap-y-1"
               >
                 {selectedLLM &&
-                  AVAILABLE_LLM_PROVIDERS.find(
-                    (llm) => llm.value === selectedLLM
-                  )?.options?.(settings)}
+                  providers
+                    .find((llm) => llm.value === selectedLLM)
+                    ?.options?.(settings)}
               </div>
             </div>
           </form>

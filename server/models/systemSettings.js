@@ -382,6 +382,9 @@ const SystemSettings = {
           "clientSecret",
           (v) => !v.match(/^\*+$/)
         );
+        mergeStringField(mergedConfig, newConfig, "authType", (v) =>
+          Object.values(OutlookBridge.AUTH_TYPES).includes(v)
+        );
 
         if (newConfig.accessToken !== undefined) {
           mergedConfig.accessToken = newConfig.accessToken;
@@ -868,6 +871,9 @@ const SystemSettings = {
       // Weaviate DB Keys
       WeaviateEndpoint: process.env.WEAVIATE_ENDPOINT,
       WeaviateApiKey: !!process.env.WEAVIATE_API_KEY,
+      WeaviateDeployment: process.env.WEAVIATE_DEPLOYMENT,
+      WeaviateGrpcHost: process.env.WEAVIATE_GRPC_HOST,
+      WeaviateGrpcPort: process.env.WEAVIATE_GRPC_PORT,
 
       // QDrant DB Keys
       QdrantEndpoint: process.env.QDRANT_ENDPOINT,
@@ -1076,6 +1082,9 @@ const SystemSettings = {
       LemonadeLLMModelPref: process.env.LEMONADE_LLM_MODEL_PREF,
       LemonadeLLMModelTokenLimit:
         process.env.LEMONADE_LLM_MODEL_TOKEN_LIMIT || 8192,
+
+      // Embedded Lemonade Keys
+      ...require("../utils/AiProviders/embeddedLemonade/config").settings(),
 
       // Minimax Keys
       MinimaxApiKey: !!process.env.MINIMAX_API_KEY,

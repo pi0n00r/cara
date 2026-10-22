@@ -294,6 +294,8 @@ const TRANSLATIONS = {
         max: "Maxim",
       },
     },
+    token_limit_reached:
+      "Răspunsul a atins limita maximă de token-uri pentru ieșire. Crește numărul maxim de token-uri pe care modelul le poate genera, pentru a permite răspunsuri mai lungi.",
   },
   vector: {
     title: "Baza de date vectorială",
@@ -1353,7 +1355,7 @@ const TRANSLATIONS = {
       "start-server": "Pornește serverul MCP",
       "delete-server": "Șterge serverul MCP",
       "tool-count-warning":
-        "Acest server MCP are activate<b> instrumentele menționate</b>, care vor consuma context în fiecare sesiune de chat.<br />Luați în considerare dezactivarea instrumentelor nedorite pentru a economisi context.",
+        "Acest server MCP are <b>instrumente activate ({{count}})</b>, care vor consuma context în fiecare sesiune de chat.<br />Luați în considerare dezactivarea instrumentelor nedorite pentru a economisi context.",
       "startup-command": "Comanda de pornire",
       command: "Ordine",
       arguments: "Argumente",

@@ -16,6 +16,7 @@ import { NoSetupWarning } from "./SetupProvider";
 import showToast from "@/utils/toast";
 import Workspace from "@/models/workspace";
 import System from "@/models/system";
+import { withEmbeddedLemonade } from "@/components/LLMSelection/EmbeddedLemonadeOptions";
 
 export default function LLMSelectorModal({
   workspaceSlug = null,
@@ -48,6 +49,9 @@ export default function LLMSelectorModal({
         const providerToSelect = initialProvider ?? savedProvider;
 
         setSettings(systemSettings);
+        setAvailableProviders(
+          withEmbeddedLemonade(WORKSPACE_LLM_PROVIDERS, systemSettings)
+        );
         setSelectedLLMProvider(providerToSelect);
         autoScrollToSelectedLLMProvider(providerToSelect);
         setSelectedLLMModel(savedModel);
@@ -70,9 +74,11 @@ export default function LLMSelectorModal({
       .finally(() => setLoading(false));
   }, [slug]);
 
+  const providers = withEmbeddedLemonade(WORKSPACE_LLM_PROVIDERS, settings);
+
   function handleSearch(e) {
     const searchTerm = e.target.value.toLowerCase();
-    const filteredProviders = WORKSPACE_LLM_PROVIDERS.filter((provider) =>
+    const filteredProviders = providers.filter((provider) =>
       provider.name.toLowerCase().includes(searchTerm)
     );
     setAvailableProviders(filteredProviders);
@@ -80,7 +86,7 @@ export default function LLMSelectorModal({
 
   function handleProviderSelection(provider) {
     setSelectedLLMProvider(provider);
-    setAvailableProviders(WORKSPACE_LLM_PROVIDERS);
+    setAvailableProviders(providers);
     autoScrollToSelectedLLMProvider(provider, 50);
     document.getElementById("llm-search-input").value = "";
     setHasChanges(true);
@@ -122,8 +128,8 @@ export default function LLMSelectorModal({
   }
 
   const providerName =
-    WORKSPACE_LLM_PROVIDERS.find((p) => p.value === selectedLLMProvider)
-      ?.name || selectedLLMProvider;
+    providers.find((p) => p.value === selectedLLMProvider)?.name ||
+    selectedLLMProvider;
 
   if (loading) {
     return (
@@ -203,7 +209,7 @@ export default function LLMSelectorModal({
             window.dispatchEvent(
               new CustomEvent(PROVIDER_SETUP_EVENT, {
                 detail: {
-                  provider: WORKSPACE_LLM_PROVIDERS.find(
+                  provider: providers.find(
                     (p) => p.value === selectedLLMProvider
                   ),
                   settings,

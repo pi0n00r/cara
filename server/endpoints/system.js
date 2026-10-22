@@ -79,6 +79,7 @@ const { Memory } = require("../models/memory");
 const {
   codexAppServer,
 } = require("../utils/AiProviders/codexSubscription/client");
+const { dummyHashCompare } = require("../utils/helpers/dummyHashCompare");
 
 function systemEndpoints(app) {
   if (!app) return;
@@ -218,6 +219,8 @@ function systemEndpoints(app) {
         const existingUser = await User._get({ username: String(username) });
 
         if (!existingUser) {
+          // Compare anyway so an unknown username takes as long as a wrong password.
+          dummyHashCompare(password);
           await EventLogs.logEvent(
             "failed_login_invalid_username",
             {
@@ -248,7 +251,7 @@ function systemEndpoints(app) {
             user: null,
             valid: false,
             token: null,
-            message: "[002] Invalid login credentials.",
+            message: "[001] Invalid login credentials.",
           });
           return;
         }

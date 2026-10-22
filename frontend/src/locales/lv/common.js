@@ -293,6 +293,8 @@ const TRANSLATIONS = {
         max: "Maksimāla",
       },
     },
+    token_limit_reached:
+      "Atbildē tika sasniegts maksimālais izvades tokenu limits. Palieliniet modeļa maksimālo izvades tokenu skaitu, lai varētu saņemt garākas atbildes.",
   },
   "vector-workspace": {
     identifier: "Vektoru datubāzes identifikators",
@@ -791,7 +793,7 @@ const TRANSLATIONS = {
       "start-server": "Sākt MCP serveri",
       "delete-server": "Dzēst MCP serveri",
       "tool-count-warning":
-        "Šis MCP servers ir aktivizētas <b> instrumenti, kas izmantos kontekstu katrā sarunā.</b> Iespējams, ir labāk deaktivizēt nevēlamus instrumentus, lai saglabātu kontekstu.",
+        "Šim MCP serverim ir <b>aktivizēti instrumenti ({{count}})</b>, kas izmantos kontekstu katrā sarunā.<br />Apsveriet nevēlamo instrumentu deaktivizēšanu, lai taupītu kontekstu.",
       "startup-command": "Sākuma komanda",
       command: "Instrukcijas",
       arguments: "Pamatatpersonas",

@@ -300,6 +300,8 @@ const TRANSLATIONS = {
         max: "Maksimalios",
       },
     },
+    token_limit_reached:
+      "Atsakymas pasiekė maksimalų išvesties žetonų limitą. Padidinkite modelio maksimalų išvesties žetonų skaičių, kad būtų galimi ilgesni atsakymai.",
   },
   "vector-workspace": {
     identifier: "Vektorių duomenų bazės identifikatorius",
@@ -1902,7 +1904,7 @@ const TRANSLATIONS = {
       "calculated-no-conditions":
         "Nėra sąlygų – maršrutas į <route>{{route}}</route>",
       "calculated-single-condition":
-        "Jei <prop> yra {{property}} ir </prop>, o {{comparator}} yra <val> ir {{value}}, o </val> yra, tada kelias yra į <route> ir {{route}}",
+        'Jei <prop>{{property}}</prop> {{comparator}} <val>"{{value}}"</val>, nukreipti į <route>{{route}}</route>',
       "calculated-multi-condition":
         "Jei {{quantifier}} yra <cond> ir {{conditions}} yra </cond>, tuomet keliauti į <route> ir {{route}} yra </route>",
       "comparator-contains": "apima",

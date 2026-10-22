@@ -258,6 +258,8 @@ const TRANSLATIONS = {
         max: "حداکثر",
       },
     },
+    token_limit_reached:
+      "پاسخ به حداکثر تعداد توکن‌های خروجی رسیده است. برای امکان تولید پاسخ‌های طولانی‌تر، حداکثر تعداد توکن‌های خروجی مدل را افزایش دهید.",
   },
   "vector-workspace": {
     identifier: "شناسه پایگاه داده برداری",
@@ -1886,9 +1888,9 @@ const TRANSLATIONS = {
       "calculated-no-conditions":
         "بدون هیچ شرط – مسیر به سمت <route>{{route}}</route>",
       "calculated-single-condition":
-        'اگر <prop>، {{property}}، </prop>، {{comparator}}، <val>، "{{value}}"، </val> باشد، مسیر را به <route>، {{route}}، </route> تعیین کنید.',
+        'اگر <prop>{{property}}</prop> {{comparator}} <val>"{{value}}"</val> باشد، مسیر را به <route>{{route}}</route> تغییر دهید.',
       "calculated-multi-condition":
-        "اگر {{quantifier}} از نوع <cond> باشد، مسیر را به <route>{{route}}</route> تغییر دهید.",
+        "اگر {{quantifier}} از <cond>{{conditions}}</cond> برقرار باشد، مسیر را به <route>{{route}}</route> تغییر دهید.",
       "comparator-contains": "شامل",
       "comparator-matches": "مسابقات",
       "comparator-between": "بین",

@@ -257,6 +257,8 @@ const TRANSLATIONS = {
         max: "Maksimum",
       },
     },
+    token_limit_reached:
+      "Cevap, maksimum çıktı token limitine ulaştı. Modelin maksimum çıktı token sayısını artırarak daha uzun cevaplar almayı sağlayın.",
   },
   "vector-workspace": {
     identifier: "Vektör veritabanı tanımlayıcısı",
@@ -762,7 +764,7 @@ const TRANSLATIONS = {
       "start-server": "MCP sunucusunu başlatın",
       "delete-server": "MCP sunucusunu sil",
       "tool-count-warning":
-        "Bu MCP sunucusu, <b> özelliklerini etkinleştirmiş durumda ve bu özellikler her etkileşimde bağlamı tüketebilir. </b> Bağlamı korumak için istenmeyen özellikleri devre dışı bırakmayı düşünebilirsiniz.",
+        "Bu MCP sunucusunda <b>{{count}} araç etkin</b> ve bu araçlar her sohbette bağlam tüketir.<br />Bağlamı korumak için istenmeyen araçları devre dışı bırakmayı düşünebilirsiniz.",
       "startup-command": "Başlangıç Komutu",
       command: "Emir",
       arguments: "Tartışmalar",
@@ -1905,8 +1907,9 @@ const TRANSLATIONS = {
       "llm-section-label":
         "LLM kuralları — eğer hiçbir hesaplanmış kural eşleşmiyorsa, toplu olarak değerlendirilir.",
       "llm-rule-body":
-        'Ardından "<desc>" içindeki "{{description}}" öğesini eşleştirin ve ardından <route>\'ye yönlendirin.',
-      "calculated-no-conditions": "Şart yok — <route>'a giden rota",
+        '<desc>"{{description}}"</desc> ile eşleşirse rotayı <route>{{route}}</route> olarak belirle.',
+      "calculated-no-conditions":
+        "Şart yok — rotayı <route>{{route}}</route> olarak belirle",
       "calculated-single-condition":
         'Eğer <prop> {{property}} </prop> {{comparator}} <val> "{{value}}" </val> ise, rotayı <route> {{route}} </route> olarak belirle.',
       "calculated-multi-condition":

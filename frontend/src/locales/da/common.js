@@ -260,6 +260,8 @@ const TRANSLATIONS = {
         max: "Maks",
       },
     },
+    token_limit_reached:
+      "Svaret nåede det maksimale tilladte antal tokens. Øg modellens maksimale antal tokens, så svaret kan være længere.",
   },
   "vector-workspace": {
     identifier: "Identifikator for vektordatabase",
@@ -746,7 +748,7 @@ const TRANSLATIONS = {
       "start-server": "Start MCP-serveren",
       "delete-server": "Slet MCP-serveren",
       "tool-count-warning":
-        "Denne MCP-server har <b>aktiverede</b>værktøjer, som vil forbruge kontekst i hvert chat-session.<br />Overvej at deaktivere uønskede værktøjer for at spare på konteksten.",
+        "Denne MCP-server har <b>{{count}} aktiverede værktøjer</b>, som vil forbruge kontekst i hver chat.<br />Overvej at deaktivere uønskede værktøjer for at spare på konteksten.",
       "startup-command": "Startkommando",
       command: "Instruktion",
       arguments: "Argumenter",
@@ -1901,7 +1903,7 @@ const TRANSLATIONS = {
       "calculated-single-condition":
         'Hvis <prop>{{property}}</prop> {{comparator}} <val> "_{{value}}_"</val>, så følg ruten til <route>{{route}}</route>',
       "calculated-multi-condition":
-        "Hvis {{quantifier}} fra <cond> er tilfældet, så følg ruten til <route>",
+        "Hvis {{quantifier}} af <cond>{{conditions}}</cond> er opfyldt, så følg ruten til <route>{{route}}</route>",
       "comparator-contains": "indeholder",
       "comparator-matches": "kampe",
       "comparator-between": "mellem",
