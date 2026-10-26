@@ -16,6 +16,11 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { assertCodexRuntime } from "./codex-runtime-layout.mjs";
+import {
+  assertCollectorLifecycleInventory,
+  assertPackagedBrowser,
+  COLLECTOR_LIFECYCLE_PACKAGES,
+} from "./collector-runtime-layout.mjs";
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const desktopDir = path.resolve(scriptDir, "..");
@@ -43,8 +48,13 @@ function copyProject(name) {
   });
 }
 
-function run(command, args, cwd) {
-  execFileSync(command, args, { cwd, stdio: "inherit", shell: false });
+function run(command, args, cwd, options = {}) {
+  execFileSync(command, args, {
+    cwd,
+    stdio: "inherit",
+    shell: false,
+    ...options,
+  });
 }
 
 fs.rmSync(runtimeDir, { recursive: true, force: true });
@@ -58,7 +68,7 @@ const schemaPath = path.join(serverDir, "prisma", "schema.prisma");
 const schema = fs.readFileSync(schemaPath, "utf8");
 const portableSchema = schema.replace(
   'url      = "file:../storage/anythingllm.db"',
-  'url      = env("DATABASE_URL")',
+  'url      = env("DATABASE_URL")'
 );
 if (portableSchema === schema) {
   throw new Error("Expected SQLite datasource was not found in schema.prisma");
@@ -79,12 +89,12 @@ fs.cpSync(nodeRuntimeSource, path.join(runtimeDir, "node"), {
 });
 
 const codexPackageDir = path.dirname(
-  fileURLToPath(import.meta.resolve("@openai/codex-win32-x64/package.json")),
+  fileURLToPath(import.meta.resolve("@openai/codex-win32-x64/package.json"))
 );
 const codexSource = path.join(
   codexPackageDir,
   "vendor",
-  "x86_64-pc-windows-msvc",
+  "x86_64-pc-windows-msvc"
 );
 const codexTarget = path.join(runtimeDir, "codex");
 assertCodexRuntime(codexSource, "Installed @openai/codex package");
@@ -93,29 +103,74 @@ assertCodexRuntime(codexTarget, "Staged Cara runtime");
 
 const runtimeNode = path.join(
   nodeRuntimeSource,
-  process.platform === "win32" ? "node.exe" : "bin/node",
+  process.platform === "win32" ? "node.exe" : "bin/node"
 );
 const corepack = path.join(
   nodeRuntimeSource,
   "node_modules",
   "corepack",
   "dist",
-  "corepack.js",
+  "corepack.js"
 );
-for (const projectDir of [serverDir, collectorDir]) {
+const npmCli = path.join(
+  nodeRuntimeSource,
+  "node_modules",
+  "npm",
+  "bin",
+  "npm-cli.js"
+);
+const yarnInstall = [
+  corepack,
+  "yarn",
+  "install",
+  "--production=true",
+  "--frozen-lockfile",
+  "--non-interactive",
+];
+run(runtimeNode, yarnInstall, serverDir);
+run(runtimeNode, [...yarnInstall, "--ignore-scripts"], collectorDir);
+assertCollectorLifecycleInventory(collectorDir);
+
+for (const lifecyclePackage of COLLECTOR_LIFECYCLE_PACKAGES) {
+  if (lifecyclePackage.name === "puppeteer") continue;
+  console.log(
+    `Running collector lifecycle: ${lifecyclePackage.name}@${lifecyclePackage.version} (${lifecyclePackage.path})`
+  );
   run(
     runtimeNode,
     [
-      corepack,
-      "yarn",
-      "install",
-      "--production=true",
-      "--frozen-lockfile",
-      "--non-interactive",
+      npmCli,
+      "rebuild",
+      `./${lifecyclePackage.path}`,
+      "--foreground-scripts",
+      "--no-audit",
+      "--no-fund",
     ],
-    projectDir,
+    collectorDir,
+    { timeout: lifecyclePackage.timeoutMs }
   );
 }
+
+const puppeteerLifecycle = COLLECTOR_LIFECYCLE_PACKAGES.find(
+  ({ name }) => name === "puppeteer"
+);
+console.log(
+  `Running collector lifecycle: ${puppeteerLifecycle.name}@${puppeteerLifecycle.version} (${puppeteerLifecycle.path})`
+);
+run(
+  runtimeNode,
+  [path.join(scriptDir, "puppeteer-runtime-layout.mjs"), collectorDir],
+  collectorDir,
+  { timeout: puppeteerLifecycle.timeoutMs }
+);
+
+const puppeteerCache = path.join(collectorDir, ".cache", "puppeteer");
+const puppeteerExecutable = execFileSync(
+  runtimeNode,
+  ["-e", "process.stdout.write(require('puppeteer').executablePath())"],
+  { cwd: collectorDir, encoding: "utf8", shell: false }
+);
+assertPackagedBrowser(puppeteerCache, puppeteerExecutable);
 run(
   runtimeNode,
   [
@@ -124,7 +179,7 @@ run(
     "--schema",
     schemaPath,
   ],
-  serverDir,
+  serverDir
 );
 
 for (const required of [
@@ -139,7 +194,7 @@ for (const required of [
   path.join(
     runtimeDir,
     "node",
-    process.platform === "win32" ? "node.exe" : "bin/node",
+    process.platform === "win32" ? "node.exe" : "bin/node"
   ),
 ]) {
   if (!fs.existsSync(required))

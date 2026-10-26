@@ -51,9 +51,9 @@ jobs:
         shell: pwsh
         run: npm ci --prefix cara-desktop
 
-      - name: Test Codex runtime inventory
+      - name: Test runtime packaging policy
         shell: pwsh
-        run: npm run test:codex-runtime --prefix cara-desktop
+        run: npm run test:runtime-packaging --prefix cara-desktop
 
       - name: Acquire pinned Node runtime
         shell: pwsh
@@ -93,6 +93,19 @@ jobs:
           foreach ($path in $required) {
             if (-not (Test-Path $path)) { throw "Missing runtime asset: $path" }
           }
+          $collector = (Resolve-Path 'cara-desktop/runtime/collector').Path
+          $puppeteerCache = Join-Path $collector '.cache\puppeteer'
+          $runtimeNode = Join-Path $env:CARA_NODE_RUNTIME 'node.exe'
+          Push-Location $collector
+          try {
+            $browser = & $runtimeNode -e "process.stdout.write(require('puppeteer').executablePath())" 2>&1
+          } finally {
+            Pop-Location
+          }
+          if ($LASTEXITCODE -ne 0) { throw "Packaged Puppeteer discovery failed" }
+          $browser = $browser.Trim()
+          if (-not (Test-Path -LiteralPath $browser -PathType Leaf)) { throw "Packaged Puppeteer executable is missing" }
+          if (-not $browser.StartsWith($puppeteerCache, [StringComparison]::OrdinalIgnoreCase)) { throw "Puppeteer executable is outside packaged runtime" }
 
       - name: Fresh package and preserved-storage installer smoke
         shell: pwsh
@@ -161,6 +174,19 @@ jobs:
             $installedPath = Join-Path $installedRuntime $relativePath
             if (-not (Test-Path $installedPath)) { throw "Missing installed Codex runtime asset: $installedPath" }
           }
+          $installedCollector = Join-Path (Split-Path $exe) 'resources\runtime\collector'
+          $puppeteerCache = Join-Path $installedCollector '.cache\puppeteer'
+          $installedNode = Join-Path (Split-Path $exe) 'resources\runtime\node\node.exe'
+          Push-Location $installedCollector
+          try {
+            $browser = & $installedNode -e "process.stdout.write(require('puppeteer').executablePath())" 2>&1
+          } finally {
+            Pop-Location
+          }
+          if ($LASTEXITCODE -ne 0) { throw "Installed Puppeteer discovery failed" }
+          $browser = $browser.Trim()
+          if (-not (Test-Path -LiteralPath $browser -PathType Leaf)) { throw "Installed Puppeteer executable is missing" }
+          if (-not $browser.StartsWith($puppeteerCache, [StringComparison]::OrdinalIgnoreCase)) { throw "Installed Puppeteer executable is outside Cara runtime" }
           if ((Get-FileHash -Algorithm SHA256 $envFile).Hash -ne $envHash) { throw '.env changed during preserved-profile install' }
           if ((Get-FileHash -Algorithm SHA256 $sentinel).Hash -ne $sentinelHash) { throw 'engine state changed during preserved-profile install' }
           Start-Process -FilePath $exe
