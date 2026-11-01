@@ -111,12 +111,15 @@ class EphemeralAgentHandler extends AgentHandler {
         include: true,
       };
       const batchSize = Math.max(limit, 25);
+      const scanLimit = Math.max(batchSize, limit * 10);
       const completedHistory = [];
       let offset = 0;
-      while (completedHistory.length < limit) {
+      while (completedHistory.length < limit && offset < scanLimit) {
+        const remainingScan = scanLimit - offset;
+        const requestedBatchSize = Math.min(batchSize, remainingScan);
         const batch = await WorkspaceChats.where(
           clause,
-          batchSize,
+          requestedBatchSize,
           { id: "desc" },
           offset
         );
@@ -126,9 +129,13 @@ class EphemeralAgentHandler extends AgentHandler {
             completedHistory.push(chatLog);
           if (completedHistory.length === limit) break;
         }
-        if (batch.length < batchSize) break;
         offset += batch.length;
+        if (batch.length < requestedBatchSize) break;
       }
+      if (completedHistory.length < limit && offset >= scanLimit)
+        this.log(
+          `History scan limit reached after ${scanLimit} records; continuing with ${completedHistory.length} completed exchanges.`
+        );
       const rawHistory = completedHistory.slice(0, limit).reverse();
 
       const { chatHistoryAttachments } = require("../files");

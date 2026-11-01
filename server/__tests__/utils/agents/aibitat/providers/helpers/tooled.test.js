@@ -409,7 +409,9 @@ describe("tooledComplete tool call arguments", () => {
         { provider: {} }
       );
       expect(result.functionCall).toBeUndefined();
-      expect(result.retryWithError).toBeDefined();
+      expect(result.retryWithError.content).toContain(
+        "Tool call arguments must be a JSON object."
+      );
     }
   );
 });

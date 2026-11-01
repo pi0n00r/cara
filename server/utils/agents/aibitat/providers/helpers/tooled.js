@@ -476,9 +476,11 @@ async function tooledComplete(
           role: "function",
           name: toolCall.function.name,
           content:
-            !argumentsAreObject
+            functionArgs === null
               ? `Failed to parse tool call arguments as JSON. Raw arguments: ${toolCall.function.arguments}`
-              : `Tool call arguments were missing required parameters. Raw arguments: ${toolCall.function.arguments || ""}`,
+              : !argumentsAreObject
+                ? `Tool call arguments must be a JSON object. Raw arguments: ${toolCall.function.arguments}`
+                : `Tool call arguments were missing required parameters. Raw arguments: ${toolCall.function.arguments || ""}`,
           originalFunctionCall: {
             id: toolCall.id,
             name: toolCall.function.name,
