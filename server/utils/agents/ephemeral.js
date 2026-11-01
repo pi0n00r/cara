@@ -103,26 +103,38 @@ class EphemeralAgentHandler extends AgentHandler {
     if (!this.#workspace) return [];
 
     try {
-      const rawHistory = (
-        await WorkspaceChats.where(
-          {
-            workspaceId: this.#workspace.id,
-            user_id: this.#userId || null,
-            thread_id: this.#threadId || null,
-            api_session_id: this.#sessionId,
-            include: true,
-          },
-          limit,
-          { id: "desc" }
-        )
-      ).reverse();
+      const clause = {
+        workspaceId: this.#workspace.id,
+        user_id: this.#userId || null,
+        thread_id: this.#threadId || null,
+        api_session_id: this.#sessionId,
+        include: true,
+      };
+      const batchSize = Math.max(limit, 25);
+      const completedHistory = [];
+      let offset = 0;
+      while (completedHistory.length < limit) {
+        const batch = await WorkspaceChats.where(
+          clause,
+          batchSize,
+          { id: "desc" },
+          offset
+        );
+        for (const chatLog of batch) {
+          const response = safeJsonParse(chatLog.response, {});
+          if (typeof response?.text === "string" && response.text.length > 0)
+            completedHistory.push(chatLog);
+          if (completedHistory.length === limit) break;
+        }
+        if (batch.length < batchSize) break;
+        offset += batch.length;
+      }
+      const rawHistory = completedHistory.slice(0, limit).reverse();
 
       const { chatHistoryAttachments } = require("../files");
       const agentHistory = [];
       rawHistory.forEach((chatLog) => {
         const response = safeJsonParse(chatLog.response, {});
-        if (typeof response?.text !== "string" || response.text.length === 0)
-          return;
         const attachments = chatHistoryAttachments(response);
         agentHistory.push(
           {

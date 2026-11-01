@@ -391,4 +391,25 @@ describe("tooledComplete tool call arguments", () => {
       "Failed to parse tool call arguments as JSON. Raw arguments: not json"
     );
   });
+
+  it.each(['"UTC"', "[]", "42"])(
+    "asks the model to retry when arguments are not an object: %s",
+    async (args) => {
+      const result = await tooledComplete(
+        fakeClient(args),
+        "m",
+        [{ role: "user", content: "what time is it" }],
+        [
+          {
+            name: "get-time",
+            parameters: { type: "object", required: ["tz"] },
+          },
+        ],
+        () => 0,
+        { provider: {} }
+      );
+      expect(result.functionCall).toBeUndefined();
+      expect(result.retryWithError).toBeDefined();
+    }
+  );
 });

@@ -1484,7 +1484,7 @@ const webBrowsing = {
             // Managed fastCRW returns `data` as a flat array; self-hosted nests it under `data.results`.
             const searchResults = Array.isArray(response?.data)
               ? response.data
-              : response?.data?.results ?? [];
+              : (response?.data?.results ?? []);
 
             const data = [];
             searchResults.forEach((searchResult) => {
@@ -1922,6 +1922,20 @@ const webBrowsing = {
               }"`
             );
 
+            const searchAbortController = new AbortController();
+            const parentSignal = this.super.abortController?.signal;
+            const abortFromParent = () =>
+              searchAbortController.abort(parentSignal?.reason);
+            if (parentSignal?.aborted) abortFromParent();
+            else
+              parentSignal?.addEventListener("abort", abortFromParent, {
+                once: true,
+              });
+            const timeout = setTimeout(
+              () => searchAbortController.abort(new Error("Search timed out")),
+              30_000
+            );
+
             const { response, error } = await fetch(
               "https://api.deepseek.com/v1/tools/search",
               {
@@ -1931,11 +1945,7 @@ const webBrowsing = {
                   Authorization: `Bearer ${apiKey}`,
                 },
                 body: JSON.stringify({ query: String(query), count: 10 }),
-                signal: AbortSignal.any([
-                  this.super.abortController?.signal ??
-                    new AbortController().signal,
-                  AbortSignal.timeout(30_000),
-                ]),
+                signal: searchAbortController.signal,
               }
             )
               .then(async (res) => {
@@ -1954,6 +1964,10 @@ const webBrowsing = {
                   `DeepSeek Search Error: ${e.message}`
                 );
                 return { response: null, error: e.message };
+              })
+              .finally(() => {
+                clearTimeout(timeout);
+                parentSignal?.removeEventListener("abort", abortFromParent);
               });
             if (error)
               return `There was an error searching for content. ${error}`;
