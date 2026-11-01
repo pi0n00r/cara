@@ -534,7 +534,7 @@ class EphemeralAgentHandler extends AgentHandler {
   ) {
     this.aibitat = new AIbitat({
       provider: this.provider ?? "openai",
-      model: this.model ?? "gpt-4.1-nano",
+      model: this.model ?? "gpt-5.6-luna",
       temperature: this.#workspace?.openAiTemp,
       reasoningEffort:
         this.#workspace?.chatReasoningEffort ||

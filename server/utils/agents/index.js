@@ -112,6 +112,9 @@ class AgentHandler {
       const agentHistory = [];
       rawHistory.forEach((chatLog) => {
         const response = safeJsonParse(chatLog.response, {});
+        // A prompt that never got a response is left out of the agent history -
+        // some providers (ex: Bedrock) reject a blank assistant message.
+        if (!response?.text) return;
         const attachments = chatHistoryAttachments(response);
         agentHistory.push(
           {
@@ -339,7 +342,7 @@ class AgentHandler {
       case "codex-subscription":
         return process.env.CODEX_SUBSCRIPTION_MODEL_PREF ?? "gpt-5.6-sol";
       case "openai":
-        return process.env.OPEN_MODEL_PREF ?? "gpt-4.1-nano";
+        return process.env.OPEN_MODEL_PREF ?? "gpt-5.6-luna";
       case "anthropic":
         return process.env.ANTHROPIC_MODEL_PREF ?? "claude-sonnet-4-6";
       case "lmstudio":
@@ -376,7 +379,7 @@ class AgentHandler {
       case "fireworksai":
         return process.env.FIREWORKS_AI_LLM_MODEL_PREF ?? null;
       case "deepseek":
-        return process.env.DEEPSEEK_MODEL_PREF ?? "deepseek-chat";
+        return process.env.DEEPSEEK_MODEL_PREF ?? "deepseek-flash";
       case "litellm":
         return process.env.LITE_LLM_MODEL_PREF ?? null;
       case "moonshotai":
@@ -914,7 +917,7 @@ class AgentHandler {
     this.#args = args;
     this.aibitat = new AIbitat({
       provider: this.provider ?? "openai",
-      model: this.model ?? "gpt-4.1-nano",
+      model: this.model ?? "gpt-5.6-luna",
       temperature: this.invocation.workspace?.openAiTemp,
       reasoningEffort: await this.#reasoningEffortForRoute(),
       serviceTier: this.invocation.workspace?.chatServiceTier,
