@@ -392,7 +392,7 @@ describe("tooledComplete tool call arguments", () => {
     );
   });
 
-  it.each(['"UTC"', "[]", "42"])(
+  it.each(['"UTC"', "[]", "42", "null"])(
     "asks the model to retry when arguments are not an object: %s",
     async (args) => {
       const result = await tooledComplete(
