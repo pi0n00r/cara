@@ -4,6 +4,41 @@ const fs = require("fs");
 const { v4 } = require("uuid");
 const { normalizePath, sanitizeFileName } = require(".");
 
+function truncateUtf8Filename(filename, maxBytes = 246) {
+  if (Buffer.byteLength(filename) <= maxBytes) return filename;
+  const extension = path.extname(filename);
+  const extensionBytes = Buffer.byteLength(extension);
+  const stemLimit = Math.max(0, maxBytes - extensionBytes);
+  let stem = "";
+  for (const character of path.basename(filename, extension)) {
+    if (Buffer.byteLength(stem + character) > stemLimit) break;
+    stem += character;
+  }
+  if (stem) return `${stem}${extension}`;
+
+  let truncated = "";
+  for (const character of filename) {
+    if (Buffer.byteLength(truncated + character) > maxBytes) break;
+    truncated += character;
+  }
+  return truncated;
+}
+
+function safeUploadName(file) {
+  return truncateUtf8Filename(
+    sanitizeFileName(
+      normalizePath(Buffer.from(file.originalname, "latin1").toString("utf8"))
+    )
+  );
+}
+
+async function removeUploadedFile(request) {
+  if (!request.file?.path) return;
+  await fs.promises.unlink(request.file.path).catch((error) => {
+    if (error.code !== "ENOENT") throw error;
+  });
+}
+
 /**
  * Handle File uploads for auto-uploading.
  * Mostly used for internal GUI/API uploads.
@@ -17,9 +52,7 @@ const fileUploadStorage = multer.diskStorage({
     cb(null, uploadOutput);
   },
   filename: function (_, file, cb) {
-    file.originalname = sanitizeFileName(
-      normalizePath(Buffer.from(file.originalname, "latin1").toString("utf8"))
-    );
+    file.originalname = safeUploadName(file);
     cb(null, `${v4().split("-")[0]}-${file.originalname}`);
   },
 });
@@ -37,9 +70,7 @@ const fileAPIUploadStorage = multer.diskStorage({
     cb(null, uploadOutput);
   },
   filename: function (_, file, cb) {
-    file.originalname = sanitizeFileName(
-      normalizePath(Buffer.from(file.originalname, "latin1").toString("utf8"))
-    );
+    file.originalname = safeUploadName(file);
     cb(null, `${v4().split("-")[0]}-${file.originalname}`);
   },
 });
@@ -227,4 +258,6 @@ module.exports = {
   handlePfpUpload,
   handleAudioUpload,
   handleImageGenUpload,
+  removeUploadedFile,
+  truncateUtf8Filename,
 };

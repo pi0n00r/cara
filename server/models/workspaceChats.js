@@ -386,6 +386,30 @@ const WorkspaceChats = {
       return { chat: null, message: error.message };
     }
   },
+  updateIncluded: async function (chatId, data, userId = null) {
+    try {
+      const result = await prisma.workspace_chats.updateMany({
+        where: { id: Number(chatId), user_id: userId, include: true },
+        data: {
+          workspaceId: data.workspaceId,
+          response: safeJSONStringify(data.response),
+          thread_id: data.threadId,
+          api_session_id: data.apiSessionId,
+          lastUpdatedAt: new Date(),
+        },
+      });
+      if (result.count !== 1) return { chat: null, message: null };
+      return {
+        chat: await prisma.workspace_chats.findUnique({
+          where: { id: Number(chatId) },
+        }),
+        message: null,
+      };
+    } catch (error) {
+      console.error(error.message);
+      return { chat: null, message: error.message };
+    }
+  },
 };
 
 module.exports = { WorkspaceChats };

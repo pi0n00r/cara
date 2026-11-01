@@ -56,7 +56,7 @@ class VoyageAiEmbedder {
   async embedChunks(textChunks = []) {
     try {
       let chunksProcessed = 0;
-      const batches = await Promise.all(
+      const results = await Promise.allSettled(
         toChunks(textChunks, this.maxConcurrentChunks).map(async (batch) => {
           const embeddings = await this.voyage.embedDocuments(batch);
           chunksProcessed += batch.length;
@@ -64,6 +64,9 @@ class VoyageAiEmbedder {
           return embeddings;
         })
       );
+      const failed = results.find((result) => result.status === "rejected");
+      if (failed) throw failed.reason;
+      const batches = results.map((result) => result.value);
       return batches.flat();
     } catch (error) {
       console.error("Voyage AI Failed to embed:", error);

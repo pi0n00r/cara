@@ -15,7 +15,10 @@ const {
   getLLMProvider,
   stripThinkingFromText,
 } = require("../utils/helpers");
-const { handleFileUpload } = require("../utils/files/multer");
+const {
+  handleFileUpload,
+  removeUploadedFile,
+} = require("../utils/files/multer");
 const {
   getReasoningCapabilities,
   usesModelRouter,
@@ -143,6 +146,7 @@ function workspaceEndpoints(app) {
         const processingOnline = await Collector.online();
 
         if (!processingOnline) {
+          await removeUploadedFile(request);
           response
             .status(500)
             .json({
@@ -856,6 +860,7 @@ function workspaceEndpoints(app) {
         const processingOnline = await Collector.online();
 
         if (!processingOnline) {
+          await removeUploadedFile(request);
           response
             .status(500)
             .json({

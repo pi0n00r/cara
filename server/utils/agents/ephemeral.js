@@ -121,6 +121,8 @@ class EphemeralAgentHandler extends AgentHandler {
       const agentHistory = [];
       rawHistory.forEach((chatLog) => {
         const response = safeJsonParse(chatLog.response, {});
+        if (typeof response?.text !== "string" || response.text.length === 0)
+          return;
         const attachments = chatHistoryAttachments(response);
         agentHistory.push(
           {

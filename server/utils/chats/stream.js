@@ -365,7 +365,11 @@ async function streamChatWithWorkspace(
     };
     // The early save can fail, so fall back to creating the row here.
     const { chat: savedChat } = chat
-      ? await WorkspaceChats.upsert(chat.id, completedChat)
+      ? await WorkspaceChats.updateIncluded(
+          chat.id,
+          completedChat,
+          user?.id || null
+        )
       : await WorkspaceChats.new(completedChat);
 
     writeResponseChunk(response, {

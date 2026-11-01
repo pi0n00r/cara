@@ -1,5 +1,8 @@
 const { reqBody, multiUserMode, userFromSession } = require("../utils/http");
-const { handleFileUpload } = require("../utils/files/multer");
+const {
+  handleFileUpload,
+  removeUploadedFile,
+} = require("../utils/files/multer");
 const { validatedRequest } = require("../utils/middleware/validatedRequest");
 const { Telemetry } = require("../models/telemetry");
 const {
@@ -165,6 +168,7 @@ function workspaceParsedFilesEndpoints(app) {
         const processingOnline = await Collector.online();
 
         if (!processingOnline) {
+          await removeUploadedFile(request);
           return response.status(500).json({
             success: false,
             error: `Document processing API is not online. Document ${originalname} will not be parsed.`,

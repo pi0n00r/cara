@@ -44,6 +44,7 @@ const webBrowsing = {
             properties: {
               query: {
                 type: "string",
+                maxLength: 128,
                 description: "A search query.",
               },
             },
@@ -193,6 +194,7 @@ const webBrowsing = {
             const { response, error } = await fetch(url, {
               method: "GET",
               headers: {},
+              signal: this.super.abortController?.signal,
             })
               .then((res) => {
                 if (res.ok) return res.json();
@@ -1482,7 +1484,7 @@ const webBrowsing = {
             // Managed fastCRW returns `data` as a flat array; self-hosted nests it under `data.results`.
             const searchResults = Array.isArray(response?.data)
               ? response.data
-              : response?.data?.results ?? [];
+              : (response?.data?.results ?? []);
 
             const data = [];
             searchResults.forEach((searchResult) => {
@@ -1912,6 +1914,8 @@ const webBrowsing = {
               return `Search is disabled and no content was found. This functionality is disabled because the user has not set it up yet.`;
             }
 
+            query = Array.from(String(query)).slice(0, 128).join("");
+
             this.super.introspect(
               `${this.caller}: Using DeepSeek to search for "${
                 query.length > 100 ? `${query.slice(0, 100)}...` : query
@@ -1927,6 +1931,11 @@ const webBrowsing = {
                   Authorization: `Bearer ${apiKey}`,
                 },
                 body: JSON.stringify({ query: String(query), count: 10 }),
+                signal: AbortSignal.any([
+                  this.super.abortController?.signal ??
+                    new AbortController().signal,
+                  AbortSignal.timeout(30_000),
+                ]),
               }
             )
               .then(async (res) => {

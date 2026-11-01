@@ -138,8 +138,8 @@ class LocalAiLLM {
     try {
       const apiKey = process.env.LOCAL_AI_API_KEY ?? null;
       const headers = apiKey ? { Authorization: `Bearer ${apiKey}` } : {};
-      const { origin } = new URL(process.env.LOCAL_AI_BASE_PATH);
-      const res = await fetch(`${origin}/v1/models/capabilities`, { headers });
+      const basePath = parseLocalAiBasePath(process.env.LOCAL_AI_BASE_PATH);
+      const res = await fetch(`${basePath}/models/capabilities`, { headers });
       if (!res.ok) return [];
       const { data = [] } = await res.json();
       return Array.isArray(data) ? data : [];
@@ -148,13 +148,7 @@ class LocalAiLLM {
     }
   }
 
-  /**
-   * Returns the capabilities of the model.
-   * LocalAI reports usecase strings (`chat`, `vision`, `tools`, `thinking`, ...)
-   * and the input modalities per model on /v1/models/capabilities.
-   * @returns {Promise<{tools: 'unknown' | boolean, reasoning: 'unknown' | boolean, reasoningOptions: string[], imageGeneration: 'unknown' | boolean, vision: 'unknown' | boolean}>}
-   */
-  async getModelCapabilities() {
+  static async getModelCapabilities(modelId) {
     const unknown = {
       tools: "unknown",
       reasoning: "unknown",
@@ -163,10 +157,9 @@ class LocalAiLLM {
       vision: "unknown",
     };
     const model = (await LocalAiLLM.#fetchModelCapabilities()).find(
-      ({ id }) => id === this.model
+      ({ id }) => id === modelId
     );
     if (!model) return unknown;
-
     const capabilities = model.capabilities ?? [];
     return {
       tools: capabilities.includes("tools"),
@@ -177,6 +170,16 @@ class LocalAiLLM {
         capabilities.includes("vision") ||
         (model.input_modalities ?? []).includes("image"),
     };
+  }
+
+  /**
+   * Returns the capabilities of the model.
+   * LocalAI reports usecase strings (`chat`, `vision`, `tools`, `thinking`, ...)
+   * and the input modalities per model on /v1/models/capabilities.
+   * @returns {Promise<{tools: 'unknown' | boolean, reasoning: 'unknown' | boolean, reasoningOptions: string[], imageGeneration: 'unknown' | boolean, vision: 'unknown' | boolean}>}
+   */
+  async getModelCapabilities() {
+    return LocalAiLLM.getModelCapabilities(this.model);
   }
 
   #appendContext(contextTexts = []) {

@@ -453,17 +453,26 @@ async function tooledComplete(
 
   if (completion.tool_calls && completion.tool_calls.length > 0) {
     const toolCall = completion.tool_calls[0];
+    const selectedFunction = functions.find(
+      (fn) => fn.name === toolCall.function.name
+    );
+    const requiredArguments = selectedFunction?.parameters?.required || [];
     const functionArgs = toolCall.function.arguments?.trim()
       ? safeJsonParse(toolCall.function.arguments, null)
       : {};
 
-    if (functionArgs === null) {
+    if (
+      functionArgs === null ||
+      (requiredArguments.length > 0 &&
+        (!functionArgs ||
+          requiredArguments.some((name) => !(name in functionArgs))))
+    ) {
       return {
         textResponse: null,
         retryWithError: {
           role: "function",
           name: toolCall.function.name,
-          content: `Failed to parse tool call arguments as JSON. Raw arguments: ${toolCall.function.arguments}`,
+          content: `Tool call arguments were invalid or missing required parameters. Raw arguments: ${toolCall.function.arguments || ""}`,
           originalFunctionCall: {
             id: toolCall.id,
             name: toolCall.function.name,

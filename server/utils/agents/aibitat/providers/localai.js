@@ -66,8 +66,7 @@ class LocalAiProvider extends InheritMultiple([Provider, UnTooled]) {
   async supportsNativeToolCalling() {
     if (this.optsOutOfNativeToolCallingViaEnv(this.providerTag)) return false;
     if (this._supportsToolCalling !== null) return this._supportsToolCalling;
-    const localai = new LocalAiLLM(null, this.model);
-    const capabilities = await localai.getModelCapabilities();
+    const capabilities = await LocalAiLLM.getModelCapabilities(this.model);
     this._supportsToolCalling = capabilities.tools !== false;
     return this._supportsToolCalling;
   }

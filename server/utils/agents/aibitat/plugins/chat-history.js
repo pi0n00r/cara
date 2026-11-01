@@ -53,7 +53,10 @@ const chatHistory = {
               threadId: aibitat.handlerProps.invocation.thread_id || null,
               include: true,
               prompt: userMessage,
-              response: { text: "" },
+              response: {
+                text: "",
+                attachments: message.attachments || [],
+              },
             });
             if (chat) aibitat.registerChatId(chat.id);
           }

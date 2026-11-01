@@ -310,6 +310,8 @@ module.exports.CreatePptxPresentation = {
               });
 
               const buffer = await pptx.write({ outputType: "nodebuffer" });
+              if (this.super._aborted)
+                return "Presentation generation was cancelled.";
               const bufferSizeKB = (buffer.length / 1024).toFixed(2);
               const bufferSizeMB = (buffer.length / (1024 * 1024)).toFixed(2);
               this.super.handlerProps.log(
@@ -324,6 +326,11 @@ module.exports.CreatePptxPresentation = {
                 buffer,
                 displayFilename,
               });
+
+              if (this.super._aborted) {
+                await createFilesLib.removeGeneratedFile(savedFile.storagePath);
+                return "Presentation generation was cancelled.";
+              }
 
               this.super.socket.send("fileDownloadCard", {
                 filename: savedFile.displayFilename,
