@@ -256,7 +256,7 @@ const WorkspaceChats = {
         const user = res.user_id ? await User.get({ id: res.user_id }) : null;
         res.user = user
           ? { username: user.username }
-          : { username: res.api_session_id !== null ? "API" : "unknown user" };
+          : { username: res.api_session_id !== null ? "API" : null };
       }
 
       return results;
@@ -369,7 +369,7 @@ const WorkspaceChats = {
         include: data.include,
       };
 
-      const { chat } = await prisma.workspace_chats.upsert({
+      const chat = await prisma.workspace_chats.upsert({
         where: {
           id: Number(chatId),
           user_id: data.user?.id || null,
@@ -381,6 +381,30 @@ const WorkspaceChats = {
         create: { ...payload, prompt: data.prompt },
       });
       return { chat, message: null };
+    } catch (error) {
+      console.error(error.message);
+      return { chat: null, message: error.message };
+    }
+  },
+  updateIncluded: async function (chatId, data, userId = null) {
+    try {
+      const result = await prisma.workspace_chats.updateMany({
+        where: { id: Number(chatId), user_id: userId, include: true },
+        data: {
+          workspaceId: data.workspaceId,
+          response: safeJSONStringify(data.response),
+          thread_id: data.threadId,
+          api_session_id: data.apiSessionId,
+          lastUpdatedAt: new Date(),
+        },
+      });
+      if (result.count !== 1) return { chat: null, message: null };
+      return {
+        chat: await prisma.workspace_chats.findUnique({
+          where: { id: Number(chatId) },
+        }),
+        message: null,
+      };
     } catch (error) {
       console.error(error.message);
       return { chat: null, message: error.message };

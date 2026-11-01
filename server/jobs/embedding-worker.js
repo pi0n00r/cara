@@ -22,7 +22,10 @@
 
 const { v4: uuidv4 } = require("uuid");
 const prisma = require("../utils/prisma");
-const { getVectorDbClass } = require("../utils/helpers");
+const {
+  getVectorDbClass,
+  withEmbeddingProgressContext,
+} = require("../utils/helpers");
 const { fileData } = require("../utils/files");
 const { Telemetry } = require("../models/telemetry");
 
@@ -103,12 +106,14 @@ async function processQueue() {
 
     // Set context so NativeEmbedder can send chunk_progress IPC messages
     // enriched with workspace/file info (read via process.send in embedChunks).
-    global.__embeddingProgress = { workspaceSlug, filename: filePath, userId };
-
-    const { vectorized, error } = await VectorDb.addDocumentToNamespace(
-      workspaceSlug,
-      { ...data, docId },
-      filePath
+    const { vectorized, error } = await withEmbeddingProgressContext(
+      { workspaceSlug, filename: filePath, userId },
+      () =>
+        VectorDb.addDocumentToNamespace(
+          workspaceSlug,
+          { ...data, docId },
+          filePath
+        )
     );
 
     if (!vectorized) {

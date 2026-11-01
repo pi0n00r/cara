@@ -32,6 +32,7 @@ const chatHistory = {
            */
           if (!aibitat.trackedChatId) {
             let userMessage = message.content;
+            let attachments = message.attachments || [];
             if (userMessage.startsWith("@agent:")) {
               const lastUserMsgIndex = aibitat._chats.findLastIndex(
                 (c) => c.from === "USER" && !c.content.startsWith("@agent:")
@@ -42,7 +43,9 @@ const chatHistory = {
               // or else tool call results from the previous run will be included in the history and the model will not re-call tools
               // that previously worked for the to-be-regenerated prompt.
               if (lastUserMsgIndex !== -1) {
-                userMessage = aibitat._chats[lastUserMsgIndex].content;
+                const selectedUserMessage = aibitat._chats[lastUserMsgIndex];
+                userMessage = selectedUserMessage.content;
+                attachments = selectedUserMessage.attachments || [];
                 aibitat._chats = aibitat._chats.slice(0, lastUserMsgIndex + 1);
               }
             }
@@ -51,9 +54,12 @@ const chatHistory = {
               workspaceId: Number(aibitat.handlerProps.invocation.workspace_id),
               user: { id: aibitat.handlerProps.invocation.user_id || null },
               threadId: aibitat.handlerProps.invocation.thread_id || null,
-              include: false,
+              include: true,
               prompt: userMessage,
-              response: {},
+              response: {
+                text: "",
+                attachments,
+              },
             });
             if (chat) aibitat.registerChatId(chat.id);
           }

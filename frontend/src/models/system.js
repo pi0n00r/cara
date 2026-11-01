@@ -850,12 +850,6 @@ const System = {
    * @returns {Promise<string | null>} The app version.
    */
   fetchAppVersion: async function () {
-    const cache = window.localStorage.getItem(this.cacheKeys.deploymentVersion);
-    const { version, lastFetched } = cache
-      ? safeJsonParse(cache, { version: null, lastFetched: 0 })
-      : { version: null, lastFetched: 0 };
-
-    if (!!version && Date.now() - lastFetched < 3_600_000) return version;
     const newVersion = await fetch(`${API_BASE}/utils/metrics`, {
       method: "GET",
       cache: "no-cache",
@@ -865,7 +859,10 @@ const System = {
         return res.json();
       })
       .then((res) => res?.appVersion)
-      .catch(() => null);
+      .catch(() => {
+        window.localStorage.removeItem(this.cacheKeys.deploymentVersion);
+        return null;
+      });
 
     if (!newVersion) return null;
     window.localStorage.setItem(

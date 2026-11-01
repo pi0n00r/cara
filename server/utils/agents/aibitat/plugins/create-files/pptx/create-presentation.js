@@ -214,6 +214,7 @@ module.exports.CreatePptxPresentation = {
               const allSlides = [];
               const allCitations = [];
               for (let i = 0; i < sections.length; i++) {
+                if (this.super._aborted) break;
                 const section = sections[i];
                 this.super.introspect(
                   `${this.caller}: [${i + 1}/${totalSections}] Building section "${section.title}"…`
@@ -236,6 +237,9 @@ module.exports.CreatePptxPresentation = {
                   `${this.caller}: [${i + 1}/${totalSections}] Section "${section.title}" complete — ${slideCount} slide${slideCount !== 1 ? "s" : ""}`
                 );
               }
+
+              if (this.super._aborted)
+                return "Presentation generation was cancelled.";
 
               // Roll up all citations from sub-agents to the parent so they
               // appear as sources on the final assistant message.
@@ -306,6 +310,8 @@ module.exports.CreatePptxPresentation = {
               });
 
               const buffer = await pptx.write({ outputType: "nodebuffer" });
+              if (this.super._aborted)
+                return "Presentation generation was cancelled.";
               const bufferSizeKB = (buffer.length / 1024).toFixed(2);
               const bufferSizeMB = (buffer.length / (1024 * 1024)).toFixed(2);
               this.super.handlerProps.log(
@@ -320,6 +326,11 @@ module.exports.CreatePptxPresentation = {
                 buffer,
                 displayFilename,
               });
+
+              if (this.super._aborted) {
+                await createFilesLib.removeGeneratedFile(savedFile.storagePath);
+                return "Presentation generation was cancelled.";
+              }
 
               this.super.socket.send("fileDownloadCard", {
                 filename: savedFile.displayFilename,

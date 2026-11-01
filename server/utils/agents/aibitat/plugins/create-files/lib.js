@@ -230,6 +230,13 @@ class CreateFilesManager {
     };
   }
 
+  async removeGeneratedFile(storagePath) {
+    if (!storagePath) return;
+    await fs.unlink(storagePath).catch((error) => {
+      if (error.code !== "ENOENT") throw error;
+    });
+  }
+
   /**
    * Retrieves a generated file by its storage filename.
    * @param {string} filename - The storage filename (must match {fileType}-{uuid}.{ext} format)

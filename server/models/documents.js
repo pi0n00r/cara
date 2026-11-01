@@ -1,5 +1,8 @@
 const { v4: uuidv4 } = require("uuid");
-const { getVectorDbClass } = require("../utils/helpers");
+const {
+  getVectorDbClass,
+  withEmbeddingProgressContext,
+} = require("../utils/helpers");
 const prisma = require("../utils/prisma");
 const { Telemetry } = require("./telemetry");
 const { EventLogs } = require("./eventLogs");
@@ -145,7 +148,7 @@ const Document = {
 
       emitProgress(workspace.slug, { type: "doc_starting", ...docProgress });
 
-      global.__embeddingProgress = {
+      const embeddingProgress = {
         workspaceSlug: workspace.slug,
         filename: path,
         userId,
@@ -154,10 +157,14 @@ const Document = {
       let vectorized = false;
       let error = null;
       try {
-        ({ vectorized, error } = await VectorDb.addDocumentToNamespace(
-          workspace.slug,
-          { ...data, docId },
-          path
+        ({ vectorized, error } = await withEmbeddingProgressContext(
+          embeddingProgress,
+          () =>
+            VectorDb.addDocumentToNamespace(
+              workspace.slug,
+              { ...data, docId },
+              path
+            )
         ));
       } catch (vectorizeError) {
         error = vectorizeError.message || "Unknown error";
@@ -218,8 +225,6 @@ const Document = {
         }
       }
     }
-
-    global.__embeddingProgress = null;
 
     emitProgress(workspace.slug, {
       type: "all_complete",

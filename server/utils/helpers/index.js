@@ -1,3 +1,5 @@
+const { AsyncLocalStorage } = require("async_hooks");
+
 /**
  * File Attachment for automatic upload on the chat container page.
  * @typedef Attachment
@@ -688,15 +690,18 @@ function toChunks(arr, size) {
  * Works in both the child worker process (IPC via process.send) and the
  * main server process (direct SSE emit via EmbeddingWorkerManager).
  *
- * Requires `global.__embeddingProgress` to be set by the caller with
- * { workspaceSlug, filename, userId }.
- *
  * @param {number} chunksProcessed
  * @param {number} totalChunks
  */
+const embeddingProgressStorage = new AsyncLocalStorage();
+
+function withEmbeddingProgressContext(context, callback) {
+  return embeddingProgressStorage.run(context, callback);
+}
+
 function reportEmbeddingProgress(chunksProcessed, totalChunks) {
-  if (!global.__embeddingProgress) return;
-  const ctx = global.__embeddingProgress;
+  const ctx = embeddingProgressStorage.getStore();
+  if (!ctx) return;
   const event = {
     type: "chunk_progress",
     workspaceSlug: ctx.workspaceSlug,
@@ -868,5 +873,6 @@ module.exports = {
   toChunks,
   humanFileSize,
   reportEmbeddingProgress,
+  withEmbeddingProgressContext,
   stripThinkingFromText,
 };
