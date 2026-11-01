@@ -472,7 +472,10 @@ async function tooledComplete(
         retryWithError: {
           role: "function",
           name: toolCall.function.name,
-          content: `Tool call arguments were invalid or missing required parameters. Raw arguments: ${toolCall.function.arguments || ""}`,
+          content:
+            functionArgs === null
+              ? `Failed to parse tool call arguments as JSON. Raw arguments: ${toolCall.function.arguments}`
+              : `Tool call arguments were missing required parameters. Raw arguments: ${toolCall.function.arguments || ""}`,
           originalFunctionCall: {
             id: toolCall.id,
             name: toolCall.function.name,
