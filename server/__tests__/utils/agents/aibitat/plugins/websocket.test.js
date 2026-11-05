@@ -350,6 +350,48 @@ describe("websocket plugin follow-up chat quota", () => {
       attachments: [{ name: "generated.png", mime: "image/png" }],
     });
   });
+
+  it("keeps the image command queue usable after one command fails", async () => {
+    WorkspaceChats.count.mockResolvedValue(1);
+    generateImage.mockReset();
+    generatedImageAttachments.mockReset();
+    generateImage
+      .mockRejectedValueOnce(new Error("generator unavailable"))
+      .mockResolvedValueOnce({ textResponse: "done", outputs: [], chatId: 2 });
+    generatedImageAttachments.mockReturnValueOnce([
+      { name: "recovered.png", mime: "image/png" },
+    ]);
+
+    const { socket, aibitat } = setupPlugin({ userId: overLimitUser.id });
+    aibitat.handlerProps = {
+      invocation: {
+        user_id: overLimitUser.id,
+        workspace: { id: 1 },
+        thread_id: null,
+      },
+    };
+    const { pending } = awaitFeedback(socket);
+    await socket.handleFeedback(
+      JSON.stringify({ type: "awaitingFeedback", feedback: "/img fail" })
+    );
+    await socket.handleFeedback(
+      JSON.stringify({ type: "awaitingFeedback", feedback: "/img recover" })
+    );
+    await socket.handleFeedback(
+      JSON.stringify({ type: "awaitingFeedback", feedback: "continue" })
+    );
+
+    await expect(pending).resolves.toEqual({
+      feedback: "continue",
+      attachments: [{ name: "recovered.png", mime: "image/png" }],
+    });
+    expect(generateImage).toHaveBeenCalledTimes(2);
+    expect(
+      socket.send.mock.calls
+        .map(([message]) => JSON.parse(message))
+        .some((message) => message.type === "wssFailure")
+    ).toBe(true);
+  });
 });
 
 describe("websocket plugin session exit notice", () => {

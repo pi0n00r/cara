@@ -368,6 +368,7 @@ export default function ChatContainer({
   useEffect(() => {
     let socket = null;
     let onAbortStream = null;
+    let closedByClient = false;
 
     function removeAbortListener() {
       if (!onAbortStream) return;
@@ -384,6 +385,7 @@ export default function ChatContainer({
         socket.supportsAgentStreaming = false;
 
         onAbortStream = () => {
+          closedByClient = true;
           setAgentSessionActive(false);
           setAgentSessionSocket(null);
           window.dispatchEvent(new CustomEvent(AGENT_SESSION_END));
@@ -415,10 +417,28 @@ export default function ChatContainer({
           setAgentSessionActive(false);
           setAgentSessionSocket(null);
           window.dispatchEvent(new CustomEvent(AGENT_SESSION_END));
-          // Session end is stream plumbing, not conversation, so nothing is
-          // appended. Still sweep content-less placeholders (e.g. the pending
-          // dots from the @agent handoff) in case no agent event replaced them.
-          setChatHistory((prev) => prev.filter((msg) => !!msg.content));
+          setChatHistory((prev) => {
+            const pendingReply = prev.some(
+              (msg) => msg.role === "assistant" && msg.pending && !msg.content
+            );
+            const history = prev.filter((msg) => !!msg.content);
+            if (closedByClient || !pendingReply) return history;
+            return [
+              ...history,
+              {
+                uuid: v4(),
+                type: "abort",
+                content:
+                  "The agent session ended before a response was received.",
+                role: "assistant",
+                sources: [],
+                closed: true,
+                error: "Agent session ended unexpectedly.",
+                animate: false,
+                pending: false,
+              },
+            ];
+          });
           setLoadingResponse(false);
           setWebsocket(null);
           setSocketId(null);
@@ -457,6 +477,7 @@ export default function ChatContainer({
     return () => {
       removeAbortListener();
       if (socket) {
+        closedByClient = true;
         setAgentSessionActive(false);
         window.dispatchEvent(new CustomEvent(AGENT_SESSION_END));
         socket.close();

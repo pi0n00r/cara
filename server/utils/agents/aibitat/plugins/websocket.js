@@ -550,24 +550,42 @@ const websocket = {
                 if (isImageCommand(data.feedback)) {
                   armTimeout();
                   imageCommandQueue = imageCommandQueue.then(async () => {
-                    const quotaMessage = await chatQuotaExceededMessage(
-                      aibitat?.handlerProps?.invocation?.user_id
-                    );
-                    if (quotaMessage) {
-                      socket.send(
-                        JSON.stringify({
-                          type: "wssFailure",
-                          content: quotaMessage,
-                        })
+                    try {
+                      const quotaMessage = await chatQuotaExceededMessage(
+                        aibitat?.handlerProps?.invocation?.user_id
                       );
-                      return;
+                      if (quotaMessage) {
+                        socket.send(
+                          JSON.stringify({
+                            type: "wssFailure",
+                            content: quotaMessage,
+                          })
+                        );
+                        return;
+                      }
+                      const attachments = await handleImageCommand({
+                        aibitat,
+                        socket,
+                        message: data.feedback,
+                      });
+                      pendingImageAttachments.push(...attachments);
+                    } catch (error) {
+                      console.error("Inline image command failed:", error);
+                      try {
+                        socket.send(
+                          JSON.stringify({
+                            type: "wssFailure",
+                            content:
+                              "Image generation failed. Please try again.",
+                          })
+                        );
+                      } catch (sendError) {
+                        console.error(
+                          "Failed to report inline image command error:",
+                          sendError
+                        );
+                      }
                     }
-                    const attachments = await handleImageCommand({
-                      aibitat,
-                      socket,
-                      message: data.feedback,
-                    });
-                    pendingImageAttachments.push(...attachments);
                   });
                   return imageCommandQueue;
                 }
