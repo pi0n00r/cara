@@ -199,11 +199,12 @@ class MCPHypervisor {
    */
   getToolCallTimeout(serverName) {
     const DEFAULT_TIMEOUT_SECONDS = 60;
+    const MAX_TIMER_MS = 2_147_483_647;
     const config = this.mcpServerConfigs.find((s) => s.name === serverName);
     const timeout = Number(config?.server?.anythingllm?.timeout);
     if (!Number.isFinite(timeout) || timeout <= 0)
       return DEFAULT_TIMEOUT_SECONDS * 1000;
-    return timeout * 1000;
+    return Math.min(timeout * 1000, MAX_TIMER_MS);
   }
 
   /**

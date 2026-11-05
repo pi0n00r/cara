@@ -1,3 +1,13 @@
+jest.mock("../../utils/prisma", () => ({
+  users: {
+    findMany: jest.fn(),
+    deleteMany: jest.fn(),
+  },
+  workspace_chats: { updateMany: jest.fn() },
+  $transaction: jest.fn(async (operations) => Promise.all(operations)),
+}));
+
+const prisma = require("../../utils/prisma");
 const { User } = require("../../models/user");
 
 describe("username validation restrictions", () => {
@@ -54,5 +64,26 @@ describe("username validation restrictions", () => {
     expect(() => User.validations.username([])).toThrow(failureMessages[3]);
     expect(() => User.validations.username(true)).not.toThrow();
     expect(() => User.validations.username(false)).not.toThrow();
+  });
+});
+
+describe("user deletion chat retention", () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  it("detaches retained chats without revealing reset history", async () => {
+    prisma.users.findMany.mockResolvedValue([{ id: 7 }]);
+    prisma.workspace_chats.updateMany.mockResolvedValue({ count: 2 });
+    prisma.users.deleteMany.mockResolvedValue({ count: 1 });
+
+    await expect(User.delete({ id: 7 })).resolves.toBe(true);
+
+    expect(prisma.workspace_chats.updateMany).toHaveBeenCalledWith({
+      where: { user_id: 7 },
+      data: {
+        user_id: null,
+        thread_id: null,
+        api_session_id: "retained-deleted-user:7",
+      },
+    });
   });
 });

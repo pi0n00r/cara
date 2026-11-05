@@ -8,6 +8,12 @@ jest.mock("../../../../../models/systemSettings", () => ({
 jest.mock("../../../../../models/workspaceChats", () => ({
   WorkspaceChats: { count: jest.fn() },
 }));
+jest.mock("../../../../../utils/chats/commands/img", () => ({
+  generateImage: jest.fn(),
+}));
+jest.mock("../../../../../utils/files", () => ({
+  generatedImageAttachments: jest.fn(() => []),
+}));
 
 const {
   websocket,
@@ -227,6 +233,7 @@ describe("websocket plugin follow-up chat quota", () => {
   const { SystemSettings } = require("../../../../../models/systemSettings");
   const { WorkspaceChats } = require("../../../../../models/workspaceChats");
   const { User } = require("../../../../../models/user");
+  const { generateImage } = require("../../../../../utils/chats/commands/img");
 
   const overLimitUser = { id: 7, role: "default", dailyMessageLimit: 3 };
 
@@ -281,6 +288,50 @@ describe("websocket plugin follow-up chat quota", () => {
 
     expect(User.get).not.toHaveBeenCalled();
     expect(aibitat.continue).toHaveBeenCalledWith("next", []);
+  });
+
+  it("serializes inline image generation across the quota check", async () => {
+    WorkspaceChats.count
+      .mockResolvedValueOnce(1)
+      .mockResolvedValueOnce(overLimitUser.dailyMessageLimit);
+    let finishFirstImage;
+    generateImage.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          finishFirstImage = resolve;
+        })
+    );
+    const { socket, aibitat } = setupPlugin({ userId: overLimitUser.id });
+    aibitat.handlerProps = {
+      invocation: {
+        user_id: overLimitUser.id,
+        workspace: { id: 1 },
+        thread_id: null,
+      },
+    };
+    awaitFeedback(socket);
+    const frame = JSON.stringify({
+      type: "awaitingFeedback",
+      feedback: "/img draw a test",
+    });
+
+    const first = socket.handleFeedback(frame);
+    const second = socket.handleFeedback(frame);
+    await flushPromises();
+
+    expect(generateImage).toHaveBeenCalledTimes(1);
+    expect(WorkspaceChats.count).toHaveBeenCalledTimes(1);
+
+    finishFirstImage({ textResponse: "done", outputs: [], chatId: 1 });
+    await Promise.all([first, second]);
+
+    expect(generateImage).toHaveBeenCalledTimes(1);
+    expect(WorkspaceChats.count).toHaveBeenCalledTimes(2);
+    expect(
+      socket.send.mock.calls
+        .map(([message]) => JSON.parse(message))
+        .some((message) => message.type === "wssFailure")
+    ).toBe(true);
   });
 });
 

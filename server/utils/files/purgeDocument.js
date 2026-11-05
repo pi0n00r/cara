@@ -55,7 +55,7 @@ async function purgeFolder(folderName = null) {
 
   const filenames = fs
     .readdirSync(subFolderPath)
-    .map((file) => `${subFolder}/${file}`);
+    .map((file) => path.join(subFolder, file));
   const workspaces = await Workspace.where();
 
   const purgePromises = [];

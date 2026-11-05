@@ -83,7 +83,7 @@ export default function AzureAiOptions({ settings }) {
         <div className="flex flex-col w-60">
           <div className="flex items-center gap-1 mb-3">
             <label
-              htmlFor="azure-openai-agent-api-select"
+              htmlFor="azure-openai-model-type-select"
               className="text-white text-sm font-semibold block"
             >
               {t("llm.providers.azure_openai.model_type")}
@@ -112,6 +112,7 @@ export default function AzureAiOptions({ settings }) {
             </div>
           </div>
           <select
+            id="azure-openai-model-type-select"
             name="AzureOpenAiModelType"
             defaultValue={settings?.AzureOpenAiModelType || "default"}
             className="border-none bg-theme-settings-input-bg text-white placeholder:text-theme-settings-input-placeholder text-sm rounded-lg focus:outline-primary-button active:outline-primary-button outline-none block w-full p-2.5"
@@ -128,7 +129,10 @@ export default function AzureAiOptions({ settings }) {
 
         <div className="flex flex-col w-60">
           <div className="flex items-center gap-1 mb-3">
-            <label className="text-white text-sm font-semibold block">
+            <label
+              htmlFor="azure-openai-agent-api-select"
+              className="text-white text-sm font-semibold block"
+            >
               {t("llm.providers.azure_openai.agent_api")}
             </label>
             <Tooltip

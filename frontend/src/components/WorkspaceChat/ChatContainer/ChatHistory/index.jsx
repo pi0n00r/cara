@@ -1,4 +1,5 @@
 import { useMemo, useCallback, forwardRef } from "react";
+import { useTranslation } from "react-i18next";
 import HistoricalMessage from "./HistoricalMessage";
 import PromptReply from "./PromptReply";
 import StatusResponse from "./StatusResponse";
@@ -47,6 +48,13 @@ export default forwardRef(function (
   const { showing, hideModal } = useManageWorkspaceModal();
   const { showScrollbar } = Appearance.getSettings();
   const { textSizeClass } = useTextSize();
+  const { t } = useTranslation();
+  const agentExitAnnouncement = useMemo(() => {
+    const exitCount = history.filter(
+      (item) => item?.type === "agentSessionExited"
+    ).length;
+    return exitCount ? `${t("chat.agent_session_exited")} (${exitCount})` : "";
+  }, [history, t]);
 
   const saveEditedMessage = useCallback(
     async ({
@@ -180,6 +188,14 @@ export default forwardRef(function (
     <MessageActionsProvider>
       <ThoughtExpansionProvider>
         <CompletedReplyAnnouncement history={history} />
+        <div
+          className="sr-only"
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+        >
+          {agentExitAnnouncement}
+        </div>
         <div
           className={`markdown text-white/80 light:text-theme-text-primary font-light ${textSizeClass} h-full md:h-[83%] pb-[100px] pt-6 md:pt-0 md:pb-20 md:mx-0 overflow-y-scroll flex flex-col items-center justify-start ${showScrollbar ? "show-scrollbar" : "no-scroll"}`}
           id="chat-history"

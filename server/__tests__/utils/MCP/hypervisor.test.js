@@ -153,4 +153,19 @@ describe("MCPHypervisor server definition parsing & validation", () => {
     expect(results["bad-args"].status).toBe("failed");
     expect(results["bad-args"].message).toMatch(/args must be an array/);
   });
+
+  it("caps configured tool timeouts at Node's maximum timer delay", async () => {
+    fs.mkdirSync(path.join(storageDir, "plugins"), { recursive: true });
+    fs.writeFileSync(
+      path.join(storageDir, "plugins", "anythingllm_mcp_servers.json"),
+      JSON.stringify({
+        mcpServers: {
+          bounded: { anythingllm: { timeout: 9_999_999 } },
+        },
+      })
+    );
+    hypervisor = new MCPHypervisor();
+
+    expect(hypervisor.getToolCallTimeout("bounded")).toBe(2_147_483_647);
+  });
 });

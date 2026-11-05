@@ -38,8 +38,10 @@ class AzureOpenAiProvider extends Provider {
       process.env.OPEN_MODEL_PREF;
     this.verbose = true;
     this.#sessionState = config.sessionState || {};
+    const responsesAPIByModel =
+      this.#sessionState.azureUseResponsesAPIByModel || {};
     this.#useResponsesAPI =
-      this.#sessionState.azureUseResponsesAPI ??
+      responsesAPIByModel[this.model] ??
       process.env.AZURE_OPENAI_AGENT_API === "responses";
   }
 
@@ -61,7 +63,10 @@ class AzureOpenAiProvider extends Provider {
       "Deployment requires the Responses API for tool calls - switching for this session."
     );
     this.#useResponsesAPI = true;
-    this.#sessionState.azureUseResponsesAPI = true;
+    this.#sessionState.azureUseResponsesAPIByModel = {
+      ...(this.#sessionState.azureUseResponsesAPIByModel || {}),
+      [this.model]: true,
+    };
     return true;
   }
 

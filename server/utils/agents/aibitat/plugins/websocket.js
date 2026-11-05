@@ -522,6 +522,7 @@ const websocket = {
               // vision context, mirroring how persisted /img images are re-read
               // at session start.
               let pendingImageAttachments = [];
+              let imageCommandQueue = Promise.resolve();
               const armTimeout = () => {
                 clearTimeout(socketTimeout);
                 socketTimeout = setTimeout(() => {
@@ -548,25 +549,27 @@ const websocket = {
                 // The agent session stays paused and awaiting the next message.
                 if (isImageCommand(data.feedback)) {
                   armTimeout();
-                  const quotaMessage = await chatQuotaExceededMessage(
-                    aibitat?.handlerProps?.invocation?.user_id
-                  );
-                  if (quotaMessage) {
-                    socket.send(
-                      JSON.stringify({
-                        type: "wssFailure",
-                        content: quotaMessage,
-                      })
+                  imageCommandQueue = imageCommandQueue.then(async () => {
+                    const quotaMessage = await chatQuotaExceededMessage(
+                      aibitat?.handlerProps?.invocation?.user_id
                     );
-                    return;
-                  }
-                  const attachments = await handleImageCommand({
-                    aibitat,
-                    socket,
-                    message: data.feedback,
+                    if (quotaMessage) {
+                      socket.send(
+                        JSON.stringify({
+                          type: "wssFailure",
+                          content: quotaMessage,
+                        })
+                      );
+                      return;
+                    }
+                    const attachments = await handleImageCommand({
+                      aibitat,
+                      socket,
+                      message: data.feedback,
+                    });
+                    pendingImageAttachments.push(...attachments);
                   });
-                  pendingImageAttachments.push(...attachments);
-                  return;
+                  return imageCommandQueue;
                 }
 
                 delete socket.handleFeedback;
