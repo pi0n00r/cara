@@ -81,7 +81,6 @@ describe("user deletion chat retention", () => {
       where: { user_id: 7 },
       data: {
         user_id: null,
-        thread_id: null,
         api_session_id: "retained-deleted-user:7",
       },
     });

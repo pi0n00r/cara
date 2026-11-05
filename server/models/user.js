@@ -321,7 +321,6 @@ const User = {
             where: { user_id: id },
             data: {
               user_id: null,
-              thread_id: null,
               api_session_id: `${RETAINED_DELETED_USER_PREFIX}${id}`,
             },
           })

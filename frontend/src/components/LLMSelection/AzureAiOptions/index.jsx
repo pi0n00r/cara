@@ -1,9 +1,17 @@
 import { Info } from "@phosphor-icons/react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Tooltip } from "react-tooltip";
 
 export default function AzureAiOptions({ settings }) {
   const { t } = useTranslation();
+  const [agentApi, setAgentApi] = useState(
+    settings?.AzureOpenAiAgentApi || "chat"
+  );
+
+  useEffect(() => {
+    setAgentApi(settings?.AzureOpenAiAgentApi || "chat");
+  }, [settings?.AzureOpenAiAgentApi]);
 
   return (
     <div className="w-full flex flex-col gap-y-7 mt-1.5">
@@ -165,7 +173,8 @@ export default function AzureAiOptions({ settings }) {
           <select
             id="azure-openai-agent-api-select"
             name="AzureOpenAiAgentApi"
-            defaultValue={settings?.AzureOpenAiAgentApi || "chat"}
+            value={agentApi}
+            onChange={(event) => setAgentApi(event.target.value)}
             className="border-none bg-theme-settings-input-bg text-white placeholder:text-theme-settings-input-placeholder text-sm rounded-lg focus:outline-primary-button active:outline-primary-button outline-none block w-full p-2.5"
             required={true}
           >

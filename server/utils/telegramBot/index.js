@@ -275,7 +275,9 @@ class TelegramBotService {
       TelegramBotService.#MAX_RETRY_DELAY_MS
     );
     this.#log(
-      `Network error. Retry ${this.#pollingRetry.count}/${maxRetries} in ${Math.round(delay / 1000)}s...`
+      `Network error. Retry ${
+        this.#pollingRetry.count
+      }/${maxRetries} in ${Math.round(delay / 1000)}s...`
     );
 
     this.#pollingRetry.timer = setTimeout(async () => {
@@ -658,6 +660,17 @@ class TelegramBotService {
       }, timeoutMs + 1000);
     } catch (error) {
       this.#log("Failed to send tool approval request:", error.message);
+      try {
+        await this.#bot.sendMessage(
+          chatId,
+          "⚠️ The tool approval request could not be displayed, so it was denied."
+        );
+      } catch (notificationError) {
+        this.#log(
+          "Failed to report denied tool approval request:",
+          notificationError.message
+        );
+      }
       // Send denial back to worker if we can't show the UI
       try {
         const response = {
