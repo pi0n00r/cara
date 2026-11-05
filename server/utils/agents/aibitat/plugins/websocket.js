@@ -572,6 +572,7 @@ const websocket = {
                   return imageCommandQueue;
                 }
 
+                await imageCommandQueue;
                 delete socket.handleFeedback;
                 clearTimeout(socketTimeout);
                 resolve({

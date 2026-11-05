@@ -3,7 +3,21 @@ process.env.STORAGE_DIR = __dirname;
 const fs = require("fs");
 const os = require("os");
 const path = require("path");
-const { moveProcessedDocsToFolder } = require("../../../utils/files");
+const {
+  moveProcessedDocsToFolder,
+  isFolderFilePath,
+} = require("../../../utils/files");
+
+describe("isFolderFilePath", () => {
+  it("accepts only a folder plus persisted JSON document filename", () => {
+    expect(isFolderFilePath(path.join("reports", "invoice.json"))).toBe(true);
+    expect(isFolderFilePath(path.join("reports", "invoice"))).toBe(false);
+    expect(isFolderFilePath("invoice.json")).toBe(false);
+    expect(isFolderFilePath(path.join("reports", "2026", "invoice.json"))).toBe(
+      false
+    );
+  });
+});
 
 describe("moveProcessedDocsToFolder", () => {
   let basePath;

@@ -99,9 +99,11 @@ export default function AzureAiOptions({ settings }) {
                 wordWrap: "break-word",
               }}
             />
-            <div
+            <button
               type="button"
-              className="text-theme-text-secondary cursor-pointer hover:bg-theme-bg-primary flex items-center justify-center rounded-full"
+              aria-label={t("llm.providers.azure_openai.model_type_tooltip")}
+              aria-describedby="azure-openai-model-type"
+              className="p-0 border-0 bg-transparent text-theme-text-secondary cursor-pointer hover:bg-theme-bg-primary flex items-center justify-center rounded-full"
               data-tooltip-id="azure-openai-model-type"
               data-tooltip-place="top"
               data-tooltip-content={t(
@@ -109,7 +111,7 @@ export default function AzureAiOptions({ settings }) {
               )}
             >
               <Info size={18} className="text-theme-text-secondary" />
-            </div>
+            </button>
           </div>
           <select
             id="azure-openai-model-type-select"
@@ -146,9 +148,11 @@ export default function AzureAiOptions({ settings }) {
                 wordWrap: "break-word",
               }}
             />
-            <div
+            <button
               type="button"
-              className="text-theme-text-secondary cursor-pointer hover:bg-theme-bg-primary flex items-center justify-center rounded-full"
+              aria-label={t("llm.providers.azure_openai.agent_api_tooltip")}
+              aria-describedby="azure-openai-agent-api"
+              className="p-0 border-0 bg-transparent text-theme-text-secondary cursor-pointer hover:bg-theme-bg-primary flex items-center justify-center rounded-full"
               data-tooltip-id="azure-openai-agent-api"
               data-tooltip-place="top"
               data-tooltip-content={t(
@@ -156,7 +160,7 @@ export default function AzureAiOptions({ settings }) {
               )}
             >
               <Info size={18} className="text-theme-text-secondary" />
-            </div>
+            </button>
           </div>
           <select
             id="azure-openai-agent-api-select"

@@ -234,6 +234,7 @@ describe("websocket plugin follow-up chat quota", () => {
   const { WorkspaceChats } = require("../../../../../models/workspaceChats");
   const { User } = require("../../../../../models/user");
   const { generateImage } = require("../../../../../utils/chats/commands/img");
+  const { generatedImageAttachments } = require("../../../../../utils/files");
 
   const overLimitUser = { id: 7, role: "default", dailyMessageLimit: 3 };
 
@@ -293,6 +294,9 @@ describe("websocket plugin follow-up chat quota", () => {
   it("serializes inline image generation across the quota check", async () => {
     WorkspaceChats.count.mockClear();
     generateImage.mockClear();
+    generatedImageAttachments.mockReturnValueOnce([
+      { name: "generated.png", mime: "image/png" },
+    ]);
     WorkspaceChats.count
       .mockResolvedValueOnce(1)
       .mockResolvedValueOnce(overLimitUser.dailyMessageLimit);
@@ -311,7 +315,7 @@ describe("websocket plugin follow-up chat quota", () => {
         thread_id: null,
       },
     };
-    const { pending } = awaitFeedback(socket);
+    const { pending, settled } = awaitFeedback(socket);
     const frame = JSON.stringify({
       type: "awaitingFeedback",
       feedback: "/img draw a test",
@@ -324,8 +328,14 @@ describe("websocket plugin follow-up chat quota", () => {
     expect(generateImage).toHaveBeenCalledTimes(1);
     expect(WorkspaceChats.count).toHaveBeenCalledTimes(1);
 
+    const followUp = socket.handleFeedback(
+      JSON.stringify({ type: "awaitingFeedback", feedback: "done" })
+    );
+    await flushPromises();
+    expect(settled).not.toHaveBeenCalled();
+
     finishFirstImage({ textResponse: "done", outputs: [], chatId: 1 });
-    await Promise.all([first, second]);
+    await Promise.all([first, second, followUp]);
 
     expect(generateImage).toHaveBeenCalledTimes(1);
     expect(WorkspaceChats.count).toHaveBeenCalledTimes(2);
@@ -335,10 +345,10 @@ describe("websocket plugin follow-up chat quota", () => {
         .some((message) => message.type === "wssFailure")
     ).toBe(true);
 
-    await socket.handleFeedback(
-      JSON.stringify({ type: "awaitingFeedback", feedback: "done" })
-    );
-    await pending;
+    await expect(pending).resolves.toMatchObject({
+      feedback: "done",
+      attachments: [{ name: "generated.png", mime: "image/png" }],
+    });
   });
 });
 

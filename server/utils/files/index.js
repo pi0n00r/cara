@@ -419,7 +419,7 @@ function normalizeFolderName(folderName = "") {
 }
 
 /**
- * Checks that a relative document path is exactly `folder/file`.
+ * Checks that a relative document path is exactly `folder/file.json`.
  * @param {string} docPath
  * @returns {boolean}
  */
@@ -430,7 +430,11 @@ function isFolderFilePath(docPath = "") {
     const segments = normalizePath(value)
       .replace(/^[\\/]+|[\\/]+$/g, "")
       .split(path.sep);
-    return segments.length === 2 && segments.every(Boolean);
+    return (
+      segments.length === 2 &&
+      segments.every(Boolean) &&
+      segments[1].endsWith(".json")
+    );
   } catch {
     return false;
   }

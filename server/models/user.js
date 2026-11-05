@@ -1,6 +1,7 @@
 const { Prisma } = require("@prisma/client");
 const prisma = require("../utils/prisma");
 const { EventLogs } = require("./eventLogs");
+const { RETAINED_DELETED_USER_PREFIX } = require("./workspaceChats");
 
 /**
  * @typedef {Object} User
@@ -321,7 +322,7 @@ const User = {
             data: {
               user_id: null,
               thread_id: null,
-              api_session_id: `retained-deleted-user:${id}`,
+              api_session_id: `${RETAINED_DELETED_USER_PREFIX}${id}`,
             },
           })
         ),
