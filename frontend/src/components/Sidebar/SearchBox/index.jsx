@@ -85,7 +85,7 @@ export default function SearchBox({ user, showNewWsModal }) {
 
 function SearchResultWrapper({ children }) {
   return (
-    <div className="absolute right-0 top-[6.2%] w-full flex flex-col gap-y-[24px] h-auto bg-theme-modal-border light:bg-theme-bg-primary light:border-2 light:border-theme-modal-border rounded-lg p-[16px] z-10 max-h-[calc(100%-24px)] overflow-y-scroll no-scroll">
+    <div className="absolute right-0 top-10 w-full flex flex-col gap-y-[24px] h-auto bg-theme-modal-border light:bg-theme-bg-primary light:border-2 light:border-theme-modal-border rounded-lg p-[16px] z-10 max-h-[calc(100%-40px)] overflow-y-scroll no-scroll">
       {children}
     </div>
   );
@@ -175,7 +175,7 @@ function SearchResultItem({ to, name, hint }) {
       onClick={() => window.dispatchEvent(new Event(SEARCH_RESULT_SELECTED))}
       className="hover:bg-[#FFF]/10 light:hover:bg-[#000]/10 transition-all duration-300 rounded-sm px-[8px] py-[2px]"
     >
-      <p className="text-theme-text-primary text-sm truncate w-[80%]">
+      <p className="text-theme-text-primary text-sm truncate w-full">
         {name}
         {hint && (
           <span className="text-theme-text-secondary text-xs ml-[4px]">
@@ -194,6 +194,7 @@ function ShortWidthNewWorkspaceButton({ user, showNewWsModal }) {
   return (
     <>
       <button
+        aria-label={t("new-workspace.title")}
         data-tooltip-id="new-workspace-tooltip"
         data-tooltip-content={t("new-workspace.title")}
         onClick={showNewWsModal}

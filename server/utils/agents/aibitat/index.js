@@ -49,6 +49,7 @@ class AIbitat {
   abortController = new AbortController();
 
   defaultProvider = null;
+  providerSessionState = {};
   defaultInterrupt;
   maxRounds;
   _chats;
@@ -767,7 +768,9 @@ class AIbitat {
       {
         role: "user",
         content: `You are in a role play game. The following roles are available:
-${availableNodes.map((node) => `@${node}: ${this.getAgentConfig(node).role}`).join("\n")}.
+${availableNodes
+  .map((node) => `@${node}: ${this.getAgentConfig(node).role}`)
+  .join("\n")}.
 
 Read the following conversation.
 
@@ -1088,12 +1091,22 @@ https://docs.anythingllm.com/agent/intelligent-tool-selection
 
       if (this.providerInstance?.verbose) {
         this?.introspect?.(
-          `${fn.caller} is executing \`${name}\` tool ${JSON.stringify(args, null, 2)}`
+          `${fn.caller} is executing \`${name}\` tool ${JSON.stringify(
+            args,
+            null,
+            2
+          )}`
         );
       }
 
       this.handlerProps?.log?.(
-        `[debug]: ${fn.caller} is attempting to call \`${name}\` tool ${JSON.stringify(args, null, 2)}`
+        `[debug]: ${
+          fn.caller
+        } is attempting to call \`${name}\` tool ${JSON.stringify(
+          args,
+          null,
+          2
+        )}`
       );
 
       const result = await fn.handler(args);
@@ -1446,7 +1459,10 @@ https://docs.anythingllm.com/agent/intelligent-tool-selection
    * @returns {Providers.OpenAIProvider} The provider instance.
    */
   getProviderForConfig(config) {
-    const provider = this.#buildProviderForConfig(config);
+    const provider = this.#buildProviderForConfig({
+      ...config,
+      sessionState: this.providerSessionState,
+    });
     // Record the slug the instance was built from so usage metrics can be
     // priced - pre-built instances (config.provider as an object) keep theirs.
     if (typeof config?.provider === "string") {
@@ -1513,7 +1529,10 @@ https://docs.anythingllm.com/agent/intelligent-tool-selection
       case "togetherai":
         return new Providers.TogetherAIProvider({ model: config.model });
       case "azure":
-        return new Providers.AzureOpenAiProvider({ model: config.model });
+        return new Providers.AzureOpenAiProvider({
+          model: config.model,
+          sessionState: config.sessionState,
+        });
       case "koboldcpp":
         return new Providers.KoboldCPPProvider({});
       case "localai":

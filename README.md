@@ -24,10 +24,10 @@ capabilities while improving the paths we operate in production.
 
 ## Install Cara
 
-The current tested Windows build is
-[Cara 1.19.0](https://github.com/pi0n00r/cara/releases/tag/v1.19.0). Download
-`Cara-1.19.0-windows-x64.exe` and verify it against the adjacent SHA-256 file
-before installation.
+Windows builds are published on the
+[Cara releases page](https://github.com/pi0n00r/cara/releases). Download the
+installer for the latest release and verify it against the adjacent SHA-256
+file before installation.
 
 Cara upgrades the existing AnythingLLM Desktop profile in place. It retains
 workspaces, documents, database state, MCP configuration, provider settings,
@@ -85,23 +85,24 @@ default; Cara does not assume or force a named priority tier.
 
 ## Upstream Alignment
 
-Cara `1.19.0` incorporates upstream AnythingLLM through `1.19.0`. This adds
-instance color palettes, Mistral reasoning support, improved Ollama context
-window handling, default-branch discovery for GitLab and Gitea repositories,
-safer text-split overlap handling, and Windows collector path corrections.
-Cara's provider hardening, Codex subscription support, Harmony tool loop,
-privacy defaults, profile compatibility, and complete Windows runtime package
-remain intact.
+Cara `1.19.1` incorporates upstream AnythingLLM master through commit
+`cbaf3357c`, after the upstream `1.19.0` release. In addition to the 1.19.0
+feature set, this includes subsequent workspace search, agent, MCP, mobile,
+Telegram, document-storage, Windows-path, and security corrections. Cara's
+provider hardening, Codex subscription support, Harmony tool loop, privacy
+defaults, profile compatibility, and complete Windows runtime package remain
+intact.
 
 ## Version Guidance
 
-| Version | Status | Operator guidance |
-| --- | --- | --- |
-| `1.19.0` | Current tested build | Upstream-aligned application and Windows package. It preserves the complete pinned Codex runtime needed for code mode and retains the provider, agent, Harmony, privacy, and preserved-profile corrections. Fully exit Cara and its provider sidecar before an in-place upgrade. |
-| `0.2.2` | Superseded | Last pre-alignment release. Functional, but use `1.19.0` for the current upstream application and fork fixes. |
-| `0.2.1` | Superseded | Do not install, promote, retag, or repackage. Its Windows package omitted Codex companion executables and resources. |
-| `0.2.0` | Superseded | Do not install, promote, retag, or repackage. Native sign-in, model discovery, and direct inference passed, but automatic workspace agents rejected `codex-subscription` during setup. The correction is in `0.2.1`. |
-| `0.1.0` | Historical foundation | Retained for provenance of the LocalAI, LM Studio, Harmony, and Windows packaging foundation. It predates the Codex subscription provider; use a current release instead. |
+| Version  | Status                | Operator guidance                                                                                                                                                                                                                                                                |
+| -------- | --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `1.19.1` | Current tested build  | Upstream-aligned application and Windows package. It preserves the complete pinned Codex runtime needed for code mode and retains the provider, agent, Harmony, privacy, and preserved-profile corrections. Fully exit Cara and its provider sidecar before an in-place upgrade. |
+| `1.19.0` | Superseded            | Initial upstream 1.19.0-aligned Cara release. Use `1.19.1` for the post-release upstream corrections.                                                                                                                                                                            |
+| `0.2.2`  | Superseded            | Last pre-alignment release. Functional, but use `1.19.1` for the current upstream application and fork fixes.                                                                                                                                                                    |
+| `0.2.1`  | Superseded            | Do not install, promote, retag, or repackage. Its Windows package omitted Codex companion executables and resources.                                                                                                                                                             |
+| `0.2.0`  | Superseded            | Do not install, promote, retag, or repackage. Native sign-in, model discovery, and direct inference passed, but automatic workspace agents rejected `codex-subscription` during setup. The correction is in `0.2.1`.                                                             |
+| `0.1.0`  | Historical foundation | Retained for provenance of the LocalAI, LM Studio, Harmony, and Windows packaging foundation. It predates the Codex subscription provider; use a current release instead.                                                                                                        |
 
 Released tags and attached files are immutable evidence. Future corrections
 must use a new version rather than replacing an older tag or asset.

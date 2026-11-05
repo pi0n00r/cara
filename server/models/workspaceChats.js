@@ -1,5 +1,6 @@
 const prisma = require("../utils/prisma");
 const { safeJSONStringify } = require("../utils/helpers/chat/responses");
+const RETAINED_DELETED_USER_PREFIX = "retained-deleted-user:";
 
 const WorkspaceChats = {
   new: async function ({
@@ -93,7 +94,10 @@ const WorkspaceChats = {
         where: {
           workspaceId,
           thread_id: null, // this function is now only used for the default thread on workspaces
-          api_session_id: null, // do not include api-session chats in the frontend for anyone.
+          OR: [
+            { api_session_id: null },
+            { api_session_id: { startsWith: RETAINED_DELETED_USER_PREFIX } },
+          ],
           include: true,
         },
         ...(limit !== null ? { take: limit } : {}),
@@ -254,9 +258,18 @@ const WorkspaceChats = {
           : { name: "deleted workspace", slug: null };
 
         const user = res.user_id ? await User.get({ id: res.user_id }) : null;
+        const retainedDeletedUser = res.api_session_id?.startsWith(
+          RETAINED_DELETED_USER_PREFIX
+        );
         res.user = user
           ? { username: user.username }
-          : { username: res.api_session_id !== null ? "API" : null };
+          : {
+              username: retainedDeletedUser
+                ? "deleted user"
+                : res.api_session_id !== null
+                  ? "API"
+                  : null,
+            };
       }
 
       return results;
@@ -412,4 +425,4 @@ const WorkspaceChats = {
   },
 };
 
-module.exports = { WorkspaceChats };
+module.exports = { WorkspaceChats, RETAINED_DELETED_USER_PREFIX };

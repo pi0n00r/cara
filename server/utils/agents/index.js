@@ -93,6 +93,7 @@ class AgentHandler {
   }
 
   async #chatHistory(limit = 10) {
+    if (limit === 0) return [];
     try {
       const rawHistory = (
         await WorkspaceChats.where(
@@ -579,6 +580,21 @@ class AgentHandler {
     });
     if (invocation?.closed)
       throw new Error("This agent invocation is already closed");
+    if (invocation && !invocation.workspace)
+      throw new Error("This agent invocation has no valid workspace");
+
+    if (invocation?.user_id) {
+      const user = await User.get({ id: Number(invocation.user_id) });
+      if (!user || user.suspended)
+        throw new Error("User is not permitted to use this agent invocation");
+
+      const workspace = await Workspace.getWithUser(user, {
+        id: invocation.workspace_id,
+      });
+      if (!workspace)
+        throw new Error("User does not have access to this workspace");
+    }
+
     this.invocation = invocation ?? null;
   }
 
@@ -905,7 +921,9 @@ class AgentHandler {
     this.aibitat.defaultProvider.reasoningEffort =
       await this.#reasoningEffortForRoute();
     this.log(
-      `Reasoning effort for ${this.provider}:${this.model} is now ${this.aibitat.defaultProvider.reasoningEffort ?? "provider default"}.`
+      `Reasoning effort for ${this.provider}:${this.model} is now ${
+        this.aibitat.defaultProvider.reasoningEffort ?? "provider default"
+      }.`
     );
   }
 
@@ -924,7 +942,9 @@ class AgentHandler {
       executionMode: this.invocation.workspace?.codexExecutionMode,
       workspacePath: this.invocation.workspace?.codexWorkspacePath,
       skillsPath: this.invocation.workspace?.codexSkillsPath,
-      chats: await this.#chatHistory(20),
+      chats: await this.#chatHistory(
+        this.invocation.workspace?.openAiHistory ?? 20
+      ),
       handlerProps: {
         invocation: this.invocation,
         log: this.log,

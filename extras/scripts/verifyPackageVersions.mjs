@@ -1,5 +1,8 @@
-import serverPackageJson from '../../server/package.json' assert { type: 'json' };
-import collectorPackageJson from '../../collector/package.json' assert { type: 'json' };
+import { createRequire } from 'node:module';
+
+const require = createRequire(import.meta.url);
+const serverPackageJson = require('../../server/package.json');
+const collectorPackageJson = require('../../collector/package.json');
 const { dependencies: serverDependencies } = serverPackageJson;
 const { dependencies: collectorDependencies } = collectorPackageJson;
 

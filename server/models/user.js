@@ -1,6 +1,7 @@
 const { Prisma } = require("@prisma/client");
 const prisma = require("../utils/prisma");
 const { EventLogs } = require("./eventLogs");
+const { RETAINED_DELETED_USER_PREFIX } = require("./workspaceChats");
 
 /**
  * @typedef {Object} User
@@ -299,9 +300,33 @@ const User = {
     }
   },
 
+  /**
+   * Deletes the users that match the given clause. Their workspace chats are
+   * kept with no user attached instead of being deleted along with them.
+   * Kept chats are excluded from history so they never mix into the context
+   * of sessionless API, Telegram or memory extraction, which all match
+   * chats with no user. They remain visible in workspace chats and exports.
+   * @param {Object} clause - The clause to filter the users to delete by.
+   * @returns {Promise<boolean>} True if the users were deleted.
+   */
   delete: async function (clause = {}) {
     try {
-      await prisma.users.deleteMany({ where: clause });
+      const users = await prisma.users.findMany({
+        where: clause,
+        select: { id: true },
+      });
+      await prisma.$transaction([
+        ...users.map(({ id }) =>
+          prisma.workspace_chats.updateMany({
+            where: { user_id: id },
+            data: {
+              user_id: null,
+              api_session_id: `${RETAINED_DELETED_USER_PREFIX}${id}`,
+            },
+          })
+        ),
+        prisma.users.deleteMany({ where: clause }),
+      ]);
       return true;
     } catch (error) {
       console.error(error.message);

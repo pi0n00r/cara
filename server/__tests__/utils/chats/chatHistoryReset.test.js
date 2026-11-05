@@ -26,12 +26,26 @@ jest.mock("../../../utils/prisma", () => {
   let rows = [];
   let autoId = 1;
 
-  // Prisma where semantics for flat clauses: undefined filters are ignored,
-  // null matches NULL, everything else is strict equality.
-  const matches = (row, where = {}) =>
-    Object.entries(where).every(([field, value]) =>
-      value === undefined ? true : row[field] === value
-    );
+  const fieldMatches = (actual, expected) => {
+    if (expected === undefined) return true;
+    if (expected && typeof expected === "object" && "startsWith" in expected)
+      return String(actual ?? "").startsWith(expected.startsWith);
+    return actual === expected;
+  };
+
+  // Prisma where semantics needed by the real history readers: undefined
+  // filters are ignored, OR accepts any child clause, and startsWith supports
+  // the retained-deleted-user visibility marker.
+  const matches = (row, where = {}) => {
+    const { OR, ...fields } = where;
+    if (
+      !Object.entries(fields).every(([field, value]) =>
+        fieldMatches(row[field], value)
+      )
+    )
+      return false;
+    return !OR || OR.some((clause) => matches(row, clause));
+  };
 
   return {
     workspace_chats: {

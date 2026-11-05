@@ -1,9 +1,17 @@
 import { Info } from "@phosphor-icons/react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Tooltip } from "react-tooltip";
 
 export default function AzureAiOptions({ settings }) {
   const { t } = useTranslation();
+  const [agentApi, setAgentApi] = useState(
+    settings?.AzureOpenAiAgentApi || "chat"
+  );
+
+  useEffect(() => {
+    setAgentApi(settings?.AzureOpenAiAgentApi || "chat");
+  }, [settings?.AzureOpenAiAgentApi]);
 
   return (
     <div className="w-full flex flex-col gap-y-7 mt-1.5">
@@ -82,7 +90,10 @@ export default function AzureAiOptions({ settings }) {
 
         <div className="flex flex-col w-60">
           <div className="flex items-center gap-1 mb-3">
-            <label className="text-white text-sm font-semibold block">
+            <label
+              htmlFor="azure-openai-model-type-select"
+              className="text-white text-sm font-semibold block"
+            >
               {t("llm.providers.azure_openai.model_type")}
             </label>
             <Tooltip
@@ -96,9 +107,11 @@ export default function AzureAiOptions({ settings }) {
                 wordWrap: "break-word",
               }}
             />
-            <div
+            <button
               type="button"
-              className="text-theme-text-secondary cursor-pointer hover:bg-theme-bg-primary flex items-center justify-center rounded-full"
+              aria-label={t("llm.providers.azure_openai.model_type_tooltip")}
+              aria-describedby="azure-openai-model-type"
+              className="p-0 border-0 bg-transparent text-theme-text-secondary cursor-pointer hover:bg-theme-bg-primary flex items-center justify-center rounded-full"
               data-tooltip-id="azure-openai-model-type"
               data-tooltip-place="top"
               data-tooltip-content={t(
@@ -106,9 +119,10 @@ export default function AzureAiOptions({ settings }) {
               )}
             >
               <Info size={18} className="text-theme-text-secondary" />
-            </div>
+            </button>
           </div>
           <select
+            id="azure-openai-model-type-select"
             name="AzureOpenAiModelType"
             defaultValue={settings?.AzureOpenAiModelType || "default"}
             className="border-none bg-theme-settings-input-bg text-white placeholder:text-theme-settings-input-placeholder text-sm rounded-lg focus:outline-primary-button active:outline-primary-button outline-none block w-full p-2.5"
@@ -119,6 +133,56 @@ export default function AzureAiOptions({ settings }) {
             </option>
             <option value="reasoning">
               {t("llm.providers.azure_openai.reasoning")}
+            </option>
+          </select>
+        </div>
+
+        <div className="flex flex-col w-60">
+          <div className="flex items-center gap-1 mb-3">
+            <label
+              htmlFor="azure-openai-agent-api-select"
+              className="text-white text-sm font-semibold block"
+            >
+              {t("llm.providers.azure_openai.agent_api")}
+            </label>
+            <Tooltip
+              id="azure-openai-agent-api"
+              place="top"
+              delayShow={300}
+              className="tooltip !text-xs !opacity-100"
+              style={{
+                maxWidth: "250px",
+                whiteSpace: "normal",
+                wordWrap: "break-word",
+              }}
+            />
+            <button
+              type="button"
+              aria-label={t("llm.providers.azure_openai.agent_api_tooltip")}
+              aria-describedby="azure-openai-agent-api"
+              className="p-0 border-0 bg-transparent text-theme-text-secondary cursor-pointer hover:bg-theme-bg-primary flex items-center justify-center rounded-full"
+              data-tooltip-id="azure-openai-agent-api"
+              data-tooltip-place="top"
+              data-tooltip-content={t(
+                "llm.providers.azure_openai.agent_api_tooltip"
+              )}
+            >
+              <Info size={18} className="text-theme-text-secondary" />
+            </button>
+          </div>
+          <select
+            id="azure-openai-agent-api-select"
+            name="AzureOpenAiAgentApi"
+            value={agentApi}
+            onChange={(event) => setAgentApi(event.target.value)}
+            className="border-none bg-theme-settings-input-bg text-white placeholder:text-theme-settings-input-placeholder text-sm rounded-lg focus:outline-primary-button active:outline-primary-button outline-none block w-full p-2.5"
+            required={true}
+          >
+            <option value="chat">
+              {t("llm.providers.azure_openai.chat_completions")}
+            </option>
+            <option value="responses">
+              {t("llm.providers.azure_openai.responses")}
             </option>
           </select>
         </div>

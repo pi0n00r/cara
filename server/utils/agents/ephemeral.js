@@ -100,6 +100,7 @@ class EphemeralAgentHandler extends AgentHandler {
   }
 
   async #chatHistory(limit = 10) {
+    if (limit === 0) return [];
     if (!this.#workspace) return [];
 
     try {
@@ -565,7 +566,7 @@ class EphemeralAgentHandler extends AgentHandler {
       executionMode: this.#workspace?.codexExecutionMode,
       workspacePath: this.#workspace?.codexWorkspacePath,
       skillsPath: this.#workspace?.codexSkillsPath,
-      chats: await this.#chatHistory(20),
+      chats: await this.#chatHistory(this.#workspace?.openAiHistory ?? 20),
       handlerProps: {
         invocation: {
           workspace: this.#workspace,

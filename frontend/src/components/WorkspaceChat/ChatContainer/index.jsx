@@ -55,7 +55,6 @@ export default function ChatContainer({
   const { files, parseAttachments } = useContext(DndUploaderContext);
   const { chatHistoryRef } = useChatContainerQuickScroll();
   const pendingMessageChecked = useRef(false);
-  const pendingResetRef = useRef(false);
   const activeThreadSlug = threadSlug;
 
   const isEmpty =
@@ -332,7 +331,6 @@ export default function ChatContainer({
         // server to abort the agent and close the socket; fall through to the
         // /reset flow below which resets memory + clears chat history.
         if (promptMessage.userMessage.trim() !== "/reset") return;
-        pendingResetRef.current = true;
       }
 
       if (!promptMessage || !promptMessage?.userMessage) return false;
@@ -370,6 +368,7 @@ export default function ChatContainer({
   useEffect(() => {
     let socket = null;
     let onAbortStream = null;
+    let closedByClient = false;
 
     function removeAbortListener() {
       if (!onAbortStream) return;
@@ -386,6 +385,7 @@ export default function ChatContainer({
         socket.supportsAgentStreaming = false;
 
         onAbortStream = () => {
+          closedByClient = true;
           setAgentSessionActive(false);
           setAgentSessionSocket(null);
           window.dispatchEvent(new CustomEvent(AGENT_SESSION_END));
@@ -417,26 +417,28 @@ export default function ChatContainer({
           setAgentSessionActive(false);
           setAgentSessionSocket(null);
           window.dispatchEvent(new CustomEvent(AGENT_SESSION_END));
-          // When the close was triggered by /reset, skip the "Agent session
-          // complete." status - the pending /reset flow will clear history.
-          if (pendingResetRef.current) {
-            pendingResetRef.current = false;
-          } else {
-            setChatHistory((prev) => [
-              ...prev.filter((msg) => !!msg.content),
+          setChatHistory((prev) => {
+            const pendingReply = prev.some(
+              (msg) => msg.role === "assistant" && msg.pending && !msg.content
+            );
+            const history = prev.filter((msg) => !!msg.content);
+            if (closedByClient || !pendingReply) return history;
+            return [
+              ...history,
               {
                 uuid: v4(),
-                type: "statusResponse",
-                content: "Agent session complete.",
+                type: "abort",
+                content:
+                  "The agent session ended before a response was received.",
                 role: "assistant",
                 sources: [],
                 closed: true,
-                error: null,
+                error: "Agent session ended unexpectedly.",
                 animate: false,
                 pending: false,
               },
-            ]);
-          }
+            ];
+          });
           setLoadingResponse(false);
           setWebsocket(null);
           setSocketId(null);
@@ -475,6 +477,7 @@ export default function ChatContainer({
     return () => {
       removeAbortListener();
       if (socket) {
+        closedByClient = true;
         setAgentSessionActive(false);
         window.dispatchEvent(new CustomEvent(AGENT_SESSION_END));
         socket.close();

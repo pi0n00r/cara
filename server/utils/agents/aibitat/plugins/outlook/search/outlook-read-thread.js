@@ -66,7 +66,14 @@ module.exports.OutlookReadThread = {
                 .map((msg, i) => {
                   let attachmentInfo = "";
                   if (msg.attachments?.length > 0) {
-                    attachmentInfo = `\n   Attachments: ${msg.attachments.map((a) => `${a.name} (${a.contentType}, ${(a.size / 1024).toFixed(1)}KB)`).join(", ")}`;
+                    attachmentInfo = `\n   Attachments: ${msg.attachments
+                      .map(
+                        (a) =>
+                          `${a.name} (${a.contentType}, ${(
+                            a.size / 1024
+                          ).toFixed(1)}KB)`
+                      )
+                      .join(", ")}`;
                   }
 
                   const bodyContent =
@@ -100,7 +107,7 @@ module.exports.OutlookReadThread = {
                 id: `outlook-thread-${thread.conversationId}`,
                 title: thread.subject,
                 text: `Subject: "${thread.subject}"\n\n${messagesFormatted}`,
-                chunkSource: `outlook-thread://${this._generatePermalink(thread.conversationId)}`,
+                ...(thread.permalink ? { chunkSource: thread.permalink } : {}),
                 score: null,
               });
 
@@ -115,14 +122,6 @@ module.exports.OutlookReadThread = {
             } catch (e) {
               return handleSkillError(this, "outlook-read-thread", e);
             }
-          },
-          _generatePermalink: function (conversationId) {
-            if (!conversationId) return null;
-            let encodedId = encodeURIComponent(conversationId);
-            // For outlook, this needs to be specifically encoded
-            // as the webpage does not respect it like traditional URL encoding
-            encodedId = encodedId.replace(/-/g, "%2F");
-            return `https://outlook.live.com/mail/inbox/id/${encodedId}`;
           },
         });
       },

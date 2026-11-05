@@ -3,6 +3,7 @@ const MCPHypervisor = require("./hypervisor");
 // JSON-RPC "Method not found". A server that does not implement `ping`
 // answers with this code, which still proves it is alive.
 const JSONRPC_METHOD_NOT_FOUND = -32601;
+const MAX_TOOLS_LIST_PAGES = 100;
 
 /**
  * Check whether an MCP server client is reachable. A server that answers
@@ -20,6 +21,32 @@ async function isMCPServerReachable(mcp) {
     if (error?.code === JSONRPC_METHOD_NOT_FOUND) return true;
     throw error;
   }
+}
+
+// The SDK returns one page per call. Only expose the list once every page
+// has loaded, so a later-page error cannot silently hide tools.
+async function listAllMCPTools(mcp) {
+  const tools = [];
+  const seenCursors = new Set();
+  let pageCount = 0;
+  let cursor;
+  do {
+    pageCount += 1;
+    if (pageCount > MAX_TOOLS_LIST_PAGES)
+      throw new Error(`MCP tools/list exceeded ${MAX_TOOLS_LIST_PAGES} pages`);
+    const page = await mcp.listTools(
+      cursor === undefined ? undefined : { cursor }
+    );
+    tools.push(...page.tools);
+    cursor = page.nextCursor;
+    if (cursor !== undefined) {
+      if (seenCursors.has(cursor))
+        throw new Error("MCP tools/list returned a repeated pagination cursor");
+      seenCursors.add(cursor);
+    }
+  } while (cursor !== undefined);
+  mcp.cacheToolMetadata?.(tools);
+  return tools;
 }
 
 class MCPCompatibilityLayer extends MCPHypervisor {
@@ -53,8 +80,7 @@ class MCPCompatibilityLayer extends MCPHypervisor {
 
     let tools;
     try {
-      const response = await mcp.listTools();
-      tools = response.tools;
+      tools = await listAllMCPTools(mcp);
     } catch (error) {
       this.log(`Failed to list tools for MCP server ${name}:`, error);
       return null;
@@ -111,12 +137,17 @@ class MCPCompatibilityLayer extends MCPHypervisor {
                       args
                     );
                     aibitat.introspect(
-                      `Executing MCP server: ${name} with ${JSON.stringify(args, null, 2)}`
+                      `Executing MCP server: ${name} with ${JSON.stringify(
+                        args,
+                        null,
+                        2
+                      )}`
                     );
-                    const result = await currentMcp.callTool({
-                      name: tool.name,
-                      arguments: args,
-                    });
+                    const result = await currentMcp.callTool(
+                      { name: tool.name, arguments: args },
+                      undefined,
+                      { timeout: mcpLayer.getToolCallTimeout(name) }
+                    );
                     aibitat.handlerProps.log(
                       `MCP server: ${name}:${tool.name} completed successfully`,
                       result
@@ -134,7 +165,9 @@ class MCPCompatibilityLayer extends MCPHypervisor {
                       `MCP server: ${name}:${tool.name} failed with error:`,
                       error
                     );
-                    return `The tool ${name}:${tool.name} failed with error: ${error?.message || "An unknown error occurred"}`;
+                    return `The tool ${name}:${tool.name} failed with error: ${
+                      error?.message || "An unknown error occurred"
+                    }`;
                   }
                 },
               });
@@ -190,7 +223,7 @@ class MCPCompatibilityLayer extends MCPHypervisor {
       // other server. Keep the server visible with its error instead.
       try {
         const online = await isMCPServerReachable(mcp);
-        const tools = (online ? (await mcp.listTools()).tools : []).filter(
+        const tools = (online ? await listAllMCPTools(mcp) : []).filter(
           (tool) => !tool.name.startsWith("handle_mcp_connection_mcp_")
         );
         servers.push({
@@ -258,9 +291,8 @@ class MCPCompatibilityLayer extends MCPHypervisor {
         error: `MCP server ${name} not found in config file.`,
       };
 
-    const mcp = this.mcps[name];
-    const online = mcp ? await isMCPServerReachable(mcp) : false; // If the server is not in the mcps object, it is not running
-    if (online) this.pruneMCPServer(name);
+    // Removing local configuration must not depend on the server being reachable.
+    this.pruneMCPServer(name);
     this.removeMCPServerFromConfig(name);
 
     delete this.mcps[name];

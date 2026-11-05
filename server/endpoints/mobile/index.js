@@ -3,6 +3,7 @@ const { MobileDevice } = require("../../models/mobileDevice");
 const { handleMobileCommand } = require("./utils");
 const { validDeviceToken, validRegistrationToken } = require("./middleware");
 const { reqBody } = require("../../utils/http");
+const { writeResponseChunk } = require("../../utils/helpers/chat/responses");
 const {
   flexUserRoleValid,
   ROLES,
@@ -148,9 +149,18 @@ function mobileEndpoints(app) {
     [validDeviceToken],
     async (request, response) => {
       try {
-        return handleMobileCommand(request, response);
+        return await handleMobileCommand(request, response);
       } catch (e) {
         console.error(e);
+        if (response.headersSent) {
+          if (!response.writableEnded)
+            writeResponseChunk(response, {
+              type: "abort",
+              close: true,
+              error: e.message,
+            });
+          return response.end();
+        }
         response.sendStatus(500).end();
       }
     }
