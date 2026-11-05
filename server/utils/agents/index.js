@@ -93,6 +93,7 @@ class AgentHandler {
   }
 
   async #chatHistory(limit = 10) {
+    if (limit === 0) return [];
     try {
       const rawHistory = (
         await WorkspaceChats.where(
@@ -920,7 +921,9 @@ class AgentHandler {
     this.aibitat.defaultProvider.reasoningEffort =
       await this.#reasoningEffortForRoute();
     this.log(
-      `Reasoning effort for ${this.provider}:${this.model} is now ${this.aibitat.defaultProvider.reasoningEffort ?? "provider default"}.`
+      `Reasoning effort for ${this.provider}:${this.model} is now ${
+        this.aibitat.defaultProvider.reasoningEffort ?? "provider default"
+      }.`
     );
   }
 
@@ -939,7 +942,9 @@ class AgentHandler {
       executionMode: this.invocation.workspace?.codexExecutionMode,
       workspacePath: this.invocation.workspace?.codexWorkspacePath,
       skillsPath: this.invocation.workspace?.codexSkillsPath,
-      chats: await this.#chatHistory(20),
+      chats: await this.#chatHistory(
+        this.invocation.workspace?.openAiHistory ?? 20
+      ),
       handlerProps: {
         invocation: this.invocation,
         log: this.log,
@@ -985,7 +990,9 @@ class AgentHandler {
         await this.#providerSetupAndCheck(prompt);
         if (this.provider !== provider || this.model !== model)
           this.log(
-            `Route changed ${this.#invocationUUID}::${this.provider}:${this.model}`
+            `Route changed ${this.#invocationUUID}::${this.provider}:${
+              this.model
+            }`
           );
         this.aibitat.handlerProps.routingMetadata =
           this.routingMetadata || null;

@@ -3,6 +3,7 @@ const MCPHypervisor = require("./hypervisor");
 // JSON-RPC "Method not found". A server that does not implement `ping`
 // answers with this code, which still proves it is alive.
 const JSONRPC_METHOD_NOT_FOUND = -32601;
+const MAX_TOOLS_LIST_PAGES = 100;
 
 /**
  * Check whether an MCP server client is reachable. A server that answers
@@ -27,8 +28,12 @@ async function isMCPServerReachable(mcp) {
 async function listAllMCPTools(mcp) {
   const tools = [];
   const seenCursors = new Set();
+  let pageCount = 0;
   let cursor;
   do {
+    pageCount += 1;
+    if (pageCount > MAX_TOOLS_LIST_PAGES)
+      throw new Error(`MCP tools/list exceeded ${MAX_TOOLS_LIST_PAGES} pages`);
     const page = await mcp.listTools(
       cursor === undefined ? undefined : { cursor }
     );
@@ -40,6 +45,7 @@ async function listAllMCPTools(mcp) {
       seenCursors.add(cursor);
     }
   } while (cursor !== undefined);
+  mcp.cacheToolMetadata?.(tools);
   return tools;
 }
 
@@ -131,7 +137,11 @@ class MCPCompatibilityLayer extends MCPHypervisor {
                       args
                     );
                     aibitat.introspect(
-                      `Executing MCP server: ${name} with ${JSON.stringify(args, null, 2)}`
+                      `Executing MCP server: ${name} with ${JSON.stringify(
+                        args,
+                        null,
+                        2
+                      )}`
                     );
                     const result = await currentMcp.callTool(
                       { name: tool.name, arguments: args },
@@ -155,7 +165,9 @@ class MCPCompatibilityLayer extends MCPHypervisor {
                       `MCP server: ${name}:${tool.name} failed with error:`,
                       error
                     );
-                    return `The tool ${name}:${tool.name} failed with error: ${error?.message || "An unknown error occurred"}`;
+                    return `The tool ${name}:${tool.name} failed with error: ${
+                      error?.message || "An unknown error occurred"
+                    }`;
                   }
                 },
               });

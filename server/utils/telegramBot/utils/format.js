@@ -99,7 +99,9 @@ function markdownToTelegram(
       const trimmed = content.trim();
       const tag = trimmed.length > 200 ? "blockquote expandable" : "blockquote";
       thinkBlocks.push(
-        `<${tag}>💭 <b>Thinking continued:</b>\n${escapeHTML(trimmed)}</blockquote>`
+        `<${tag}>💭 <b>Thinking continued:</b>\n${escapeHTML(
+          trimmed
+        )}</blockquote>`
       );
       return placeholder;
     });
@@ -236,19 +238,26 @@ function escapeAndTruncate(text, max) {
 function toolApprovalMessage({ skillName, description, payload }) {
   let payloadText = "";
   if (payload && Object.keys(payload).length > 0) {
-    const json = escapeAndTruncate(
-      JSON.stringify(payload, null, 2),
-      MAX_TOOL_PAYLOAD_PREVIEW
-    );
+    const rawJson = JSON.stringify(payload, null, 2);
+    const json = escapeHTML(rawJson);
+    if (json.length > MAX_TOOL_PAYLOAD_PREVIEW)
+      throw new Error(
+        "Tool approval denied because the complete parameters exceed the display limit."
+      );
     payloadText = `\n\n<b>Parameters:</b>\n<code>${json}</code>`;
   }
   const descText = description
-    ? `\n${escapeAndTruncate(String(description), MAX_TOOL_DESCRIPTION_PREVIEW)}`
+    ? `\n${escapeAndTruncate(
+        String(description),
+        MAX_TOOL_DESCRIPTION_PREVIEW
+      )}`
     : "";
 
   return (
     `🔧 <b>Tool Approval Required</b>\n\n` +
-    `The agent wants to execute: <b>${escapeHTML(String(skillName))}</b>${descText}${payloadText}\n\n` +
+    `The agent wants to execute: <b>${escapeHTML(
+      String(skillName)
+    )}</b>${descText}${payloadText}\n\n` +
     `Do you want to allow this action?`
   );
 }

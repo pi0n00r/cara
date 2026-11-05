@@ -244,9 +244,9 @@ class FlowExecutor {
   async executeFlow(flow, initialVariables = {}, aibitat) {
     await Telemetry.sendTelemetry("agent_flow_execution_started");
 
-    const startVariables =
-      flow.config.steps.find((s) => s.type === "start")?.config?.variables ||
-      [];
+    const startVariables = flow.config.steps
+      .filter((step) => step.type === "start")
+      .flatMap((step) => step.config?.variables || []);
     this.staticVariables = new Set(
       startVariables
         .filter((v) => v.name && v.type === "static")

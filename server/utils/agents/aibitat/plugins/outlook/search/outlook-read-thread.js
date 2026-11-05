@@ -66,7 +66,14 @@ module.exports.OutlookReadThread = {
                 .map((msg, i) => {
                   let attachmentInfo = "";
                   if (msg.attachments?.length > 0) {
-                    attachmentInfo = `\n   Attachments: ${msg.attachments.map((a) => `${a.name} (${a.contentType}, ${(a.size / 1024).toFixed(1)}KB)`).join(", ")}`;
+                    attachmentInfo = `\n   Attachments: ${msg.attachments
+                      .map(
+                        (a) =>
+                          `${a.name} (${a.contentType}, ${(
+                            a.size / 1024
+                          ).toFixed(1)}KB)`
+                      )
+                      .join(", ")}`;
                   }
 
                   const bodyContent =
@@ -100,7 +107,7 @@ module.exports.OutlookReadThread = {
                 id: `outlook-thread-${thread.conversationId}`,
                 title: thread.subject,
                 text: `Subject: "${thread.subject}"\n\n${messagesFormatted}`,
-                chunkSource: `outlook-thread://${thread.permalink}`,
+                ...(thread.permalink ? { chunkSource: thread.permalink } : {}),
                 score: null,
               });
 

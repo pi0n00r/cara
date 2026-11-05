@@ -548,6 +548,18 @@ const websocket = {
                 // The agent session stays paused and awaiting the next message.
                 if (isImageCommand(data.feedback)) {
                   armTimeout();
+                  const quotaMessage = await chatQuotaExceededMessage(
+                    aibitat?.handlerProps?.invocation?.user_id
+                  );
+                  if (quotaMessage) {
+                    socket.send(
+                      JSON.stringify({
+                        type: "wssFailure",
+                        content: quotaMessage,
+                      })
+                    );
+                    return;
+                  }
                   const attachments = await handleImageCommand({
                     aibitat,
                     socket,

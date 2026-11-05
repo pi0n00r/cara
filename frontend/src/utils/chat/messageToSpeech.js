@@ -77,15 +77,21 @@ export default function messageToSpeech(message = "") {
    * so "asterisk" is never read aloud. Underscores only mark emphasis at
    * the edges of a word, so `config_file_name` is read whole.
    */
-  text = text.replace(/\*\*\*([^*]+)\*\*\*/g, "$1");
+  text = text.replace(/\*\*\*(\S(?:[^*]*\S)?)\*\*\*/g, "$1");
   text = text.replace(
-    /(?<![\p{L}\p{N}])___([^*_]+)___(?![\p{L}\p{N}])/gu,
-    "$1"
+    /(^|[^\p{L}\p{N}])___(\S(?:[^*_]*\S)?)___(?![\p{L}\p{N}])/gu,
+    "$1$2"
   );
-  text = text.replace(/\*\*([^*]+)\*\*/g, "$1");
-  text = text.replace(/(?<![\p{L}\p{N}])__([^*_]+)__(?![\p{L}\p{N}])/gu, "$1");
-  text = text.replace(/\*([^*\n]+)\*/g, "$1");
-  text = text.replace(/(?<![\p{L}\p{N}])_([^*_\n]+)_(?![\p{L}\p{N}])/gu, "$1");
+  text = text.replace(/\*\*(\S(?:[^*]*\S)?)\*\*/g, "$1");
+  text = text.replace(
+    /(^|[^\p{L}\p{N}])__(\S(?:[^*_]*\S)?)__(?![\p{L}\p{N}])/gu,
+    "$1$2"
+  );
+  text = text.replace(/\*(\S(?:[^*\n]*\S)?)\*/g, "$1");
+  text = text.replace(
+    /(^|[^\p{L}\p{N}])_(\S(?:[^*_\n]*\S)?)_(?![\p{L}\p{N}])/gu,
+    "$1$2"
+  );
   text = text.replace(/~~([^~]+)~~/g, "$1");
 
   /*

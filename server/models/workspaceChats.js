@@ -93,7 +93,10 @@ const WorkspaceChats = {
         where: {
           workspaceId,
           thread_id: null, // this function is now only used for the default thread on workspaces
-          api_session_id: null, // do not include api-session chats in the frontend for anyone.
+          OR: [
+            { api_session_id: null },
+            { api_session_id: { startsWith: "retained-deleted-user:" } },
+          ],
           include: true,
         },
         ...(limit !== null ? { take: limit } : {}),

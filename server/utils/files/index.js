@@ -169,8 +169,8 @@ function normalizePagination({ offset, limit } = {}) {
       String(limit).toLowerCase() === "all"
         ? Infinity
         : Number.isFinite(parsedLimit) && parsedLimit > 0
-          ? Math.min(parsedLimit, MAX_PAGE_SIZE)
-          : DEFAULT_PAGE_SIZE,
+        ? Math.min(parsedLimit, MAX_PAGE_SIZE)
+        : DEFAULT_PAGE_SIZE,
   };
 }
 
@@ -425,9 +425,11 @@ function normalizeFolderName(folderName = "") {
  */
 function isFolderFilePath(docPath = "") {
   try {
-    const segments = normalizePath(String(docPath ?? ""))
+    const value = String(docPath ?? "");
+    if (path.sep === "/" && value.includes("\\")) return false;
+    const segments = normalizePath(value)
       .replace(/^[\\/]+|[\\/]+$/g, "")
-      .split(/[\\/]/);
+      .split(path.sep);
     return segments.length === 2 && segments.every(Boolean);
   } catch {
     return false;
@@ -860,7 +862,9 @@ async function fileToPickerData({
   }
 
   console.log(
-    `Stream-parsing ${path.basename(pathToFile)} because it exceeds the ${FILE_READ_SIZE_THRESHOLD} byte limit.`
+    `Stream-parsing ${path.basename(
+      pathToFile
+    )} because it exceeds the ${FILE_READ_SIZE_THRESHOLD} byte limit.`
   );
   const stream = fs.createReadStream(pathToFile, { encoding: "utf8" });
   try {
@@ -982,7 +986,9 @@ function generatedImageAttachments(outputs = []) {
     if (!isWithin(generatedImagesPath, imagePath) || !fs.existsSync(imagePath))
       continue;
 
-    const contentString = `data:image/png;base64,${fs.readFileSync(imagePath).toString("base64")}`;
+    const contentString = `data:image/png;base64,${fs
+      .readFileSync(imagePath)
+      .toString("base64")}`;
     attachments.push({
       name: filename || storageFilename,
       mime: "image/png",

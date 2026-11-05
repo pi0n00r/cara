@@ -3,6 +3,15 @@ const { safeJsonParse } = require("../../http");
 const { TokenManager } = require("../tiktoken");
 const { convertToPromptHistory } = require("./responses");
 
+// A 1024px high-detail image is commonly billed as 765 tokens. Using that
+// conservative estimate keeps retained history images inside the same budget
+// as their accompanying text even for providers that do not expose dimensions.
+const RETAINED_IMAGE_TOKEN_ESTIMATE = 765;
+
+function attachmentTokenEstimate(message = {}) {
+  return (message.attachments?.length || 0) * RETAINED_IMAGE_TOKEN_ESTIMATE;
+}
+
 /*
 What is the message Array compressor?
 TLDR: So anyway, i started blasting (your prompts & stuff)
@@ -143,7 +152,8 @@ async function messageArrayCompressor(llm, messages = [], rawHistory = []) {
         tokenManager.countFromString(user.content),
         tokenManager.countFromString(assistant.content),
       ];
-      const total = userTokens + assistantTokens;
+      const imageTokens = attachmentTokenEstimate(user);
+      const total = userTokens + assistantTokens + imageTokens;
 
       // If during the loop the token cost of adding this history
       // is small, we can add it to history and move onto next.
@@ -181,7 +191,7 @@ async function messageArrayCompressor(llm, messages = [], rawHistory = []) {
         });
       }
 
-      const newTotal = tokenManager.statsFrom([user, assistant]);
+      const newTotal = tokenManager.statsFrom([user, assistant]) + imageTokens;
       if (historyTokenCount + newTotal > llm.limits.history) continue;
       eligibleHistoryItems.unshift(user, assistant);
       historyTokenCount += newTotal;
@@ -290,7 +300,8 @@ async function messageStringCompressor(llm, promptArgs = {}, rawHistory = []) {
         tokenManager.countFromString(user.content),
         tokenManager.countFromString(assistant.content),
       ];
-      const total = userTokens + assistantTokens;
+      const imageTokens = attachmentTokenEstimate(user);
+      const total = userTokens + assistantTokens + imageTokens;
 
       // If during the loop the token cost of adding this history
       // is small, we can add it to history and move onto next.
@@ -328,7 +339,7 @@ async function messageStringCompressor(llm, promptArgs = {}, rawHistory = []) {
         });
       }
 
-      const newTotal = tokenManager.statsFrom([user, assistant]);
+      const newTotal = tokenManager.statsFrom([user, assistant]) + imageTokens;
       if (historyTokenCount + newTotal > llm.limits.history) continue;
       eligibleHistoryItems.unshift(user, assistant);
       historyTokenCount += newTotal;
@@ -460,7 +471,9 @@ function fillSourceWindow({
   };
 
   log(
-    `Need to backfill ${nDocs - searchResults.length} chunks to fill in the source window for RAG!`
+    `Need to backfill ${
+      nDocs - searchResults.length
+    } chunks to fill in the source window for RAG!`
   );
   const seenChunks = new Set(searchResults.map((source) => source.id));
 

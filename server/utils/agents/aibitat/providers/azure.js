@@ -22,7 +22,8 @@ class AzureOpenAiProvider extends Provider {
    * deployments (eg: GPT-6) reject function tools on Chat Completions, so this
    * also flips on for the session when a deployment asks for /v1/responses.
    */
-  #useResponsesAPI = process.env.AZURE_OPENAI_AGENT_API === "responses";
+  #useResponsesAPI;
+  #sessionState;
 
   constructor(config = { model: null }) {
     const client = new OpenAI({
@@ -36,6 +37,10 @@ class AzureOpenAiProvider extends Provider {
       process.env.AZURE_OPENAI_MODEL_PREF ||
       process.env.OPEN_MODEL_PREF;
     this.verbose = true;
+    this.#sessionState = config.sessionState || {};
+    this.#useResponsesAPI =
+      this.#sessionState.azureUseResponsesAPI ??
+      process.env.AZURE_OPENAI_AGENT_API === "responses";
   }
 
   get supportsAgentStreaming() {
@@ -56,6 +61,7 @@ class AzureOpenAiProvider extends Provider {
       "Deployment requires the Responses API for tool calls - switching for this session."
     );
     this.#useResponsesAPI = true;
+    this.#sessionState.azureUseResponsesAPI = true;
     return true;
   }
 
@@ -89,7 +95,9 @@ class AzureOpenAiProvider extends Provider {
       ? responsesTooledStream
       : tooledStream;
     this.providerLog(
-      `Provider.stream${this.#useResponsesAPI ? " (responses)" : ""} - will process this chat completion.`
+      `Provider.stream${
+        this.#useResponsesAPI ? " (responses)" : ""
+      } - will process this chat completion.`
     );
 
     try {

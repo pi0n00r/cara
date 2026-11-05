@@ -93,7 +93,11 @@ function formatMessageSummary(messages) {
   return messages
     .map(
       (m, i) =>
-        `${i + 1}. [${m.isRead ? "READ" : "UNREAD"}] "${m.subject}" from ${m.fromName || m.from} (${new Date(m.receivedDateTime).toLocaleString()})${m.hasAttachments ? " 📎" : ""}\n   ID: ${m.id}\n   Conversation ID: ${m.conversationId}`
+        `${i + 1}. [${m.isRead ? "READ" : "UNREAD"}] "${m.subject}" from ${
+          m.fromName || m.from
+        } (${new Date(m.receivedDateTime).toLocaleString()})${
+          m.hasAttachments ? " 📎" : ""
+        }\n   ID: ${m.id}\n   Conversation ID: ${m.conversationId}`
     )
     .join("\n\n");
 }
@@ -187,7 +191,9 @@ async function prepareAttachmentsWithValidation(
         );
         return {
           success: false,
-          error: `Attachment rejected by user: ${result.fileInfo.name}. ${approval.message || ""}`,
+          error: `Attachment rejected by user: ${result.fileInfo.name}. ${
+            approval.message || ""
+          }`,
         };
       }
     }
@@ -527,7 +533,9 @@ class OutlookBridge {
       if (parts.length !== 3) return null;
       const payload = JSON.parse(Buffer.from(parts[1], "base64").toString());
       this.#log(
-        `${context} for: ${payload.upn || payload.email || payload.unique_name || "unknown"}`
+        `${context} for: ${
+          payload.upn || payload.email || payload.unique_name || "unknown"
+        }`
       );
       return payload;
     } catch {
@@ -776,7 +784,9 @@ class OutlookBridge {
     const now = Date.now();
     const timeUntilExpiry = expiryTime - now;
     this.#log(
-      `Token check: expires in ${Math.round(timeUntilExpiry / 1000)}s (at ${new Date(expiryTime).toISOString()})`
+      `Token check: expires in ${Math.round(
+        timeUntilExpiry / 1000
+      )}s (at ${new Date(expiryTime).toISOString()})`
     );
 
     const payload = this.#decodeAndLogToken(config.accessToken, "Token check");
@@ -923,7 +933,9 @@ class OutlookBridge {
         this.#log(
           `API request failed: ${response.status} ${response.statusText}`,
           `\n  Endpoint: ${endpoint}`,
-          `\n  Headers: ${JSON.stringify(Object.fromEntries(response.headers.entries()))}`,
+          `\n  Headers: ${JSON.stringify(
+            Object.fromEntries(response.headers.entries())
+          )}`,
           `\n  Error: ${JSON.stringify(errorData, null, 2)}`
         );
         return {
@@ -969,7 +981,9 @@ class OutlookBridge {
     if (query) {
       // $skip is not supported with $search in Microsoft Graph API
       // $orderby is also not supported with $search - results are ordered by relevance
-      endpoint = `/me/messages?$top=${limit}&$select=id,subject,from,toRecipients,ccRecipients,receivedDateTime,isRead,hasAttachments,bodyPreview,conversationId&$search="${encodeURIComponent(query)}"`;
+      endpoint = `/me/messages?$top=${limit}&$select=id,subject,from,toRecipients,ccRecipients,receivedDateTime,isRead,hasAttachments,bodyPreview,conversationId&$search="${encodeURIComponent(
+        query
+      )}"`;
     } else {
       endpoint = `/me/messages?$top=${limit}&$skip=${skip}&$orderby=receivedDateTime desc&$select=id,subject,from,toRecipients,ccRecipients,receivedDateTime,isRead,hasAttachments,bodyPreview,conversationId`;
     }
@@ -1043,7 +1057,9 @@ class OutlookBridge {
         subject: messages[0]?.subject || "No Subject",
         messageCount: messages.length,
         permalink:
-          messages[messages.length - 1]?.webLink || messages[0]?.webLink,
+          messages[messages.length - 1]?.webLink ||
+          messages[0]?.webLink ||
+          null,
         messages: messages.map((msg) =>
           mapGraphMessage(msg, { includeBody: true, includeAttachments: true })
         ),

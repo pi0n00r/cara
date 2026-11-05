@@ -310,11 +310,21 @@ const User = {
    */
   delete: async function (clause = {}) {
     try {
+      const users = await prisma.users.findMany({
+        where: clause,
+        select: { id: true },
+      });
       await prisma.$transaction([
-        prisma.workspace_chats.updateMany({
-          where: { users: clause },
-          data: { user_id: null, include: false },
-        }),
+        ...users.map(({ id }) =>
+          prisma.workspace_chats.updateMany({
+            where: { user_id: id },
+            data: {
+              user_id: null,
+              include: true,
+              api_session_id: `retained-deleted-user:${id}`,
+            },
+          })
+        ),
         prisma.users.deleteMany({ where: clause }),
       ]);
       return true;

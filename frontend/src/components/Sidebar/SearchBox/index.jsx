@@ -194,6 +194,7 @@ function ShortWidthNewWorkspaceButton({ user, showNewWsModal }) {
   return (
     <>
       <button
+        aria-label={t("new-workspace.title")}
         data-tooltip-id="new-workspace-tooltip"
         data-tooltip-content={t("new-workspace.title")}
         onClick={showNewWsModal}
