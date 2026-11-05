@@ -291,6 +291,8 @@ describe("websocket plugin follow-up chat quota", () => {
   });
 
   it("serializes inline image generation across the quota check", async () => {
+    WorkspaceChats.count.mockClear();
+    generateImage.mockClear();
     WorkspaceChats.count
       .mockResolvedValueOnce(1)
       .mockResolvedValueOnce(overLimitUser.dailyMessageLimit);
@@ -309,7 +311,7 @@ describe("websocket plugin follow-up chat quota", () => {
         thread_id: null,
       },
     };
-    awaitFeedback(socket);
+    const { pending } = awaitFeedback(socket);
     const frame = JSON.stringify({
       type: "awaitingFeedback",
       feedback: "/img draw a test",
@@ -332,6 +334,11 @@ describe("websocket plugin follow-up chat quota", () => {
         .map(([message]) => JSON.parse(message))
         .some((message) => message.type === "wssFailure")
     ).toBe(true);
+
+    await socket.handleFeedback(
+      JSON.stringify({ type: "awaitingFeedback", feedback: "done" })
+    );
+    await pending;
   });
 });
 
