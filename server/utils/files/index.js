@@ -169,8 +169,8 @@ function normalizePagination({ offset, limit } = {}) {
       String(limit).toLowerCase() === "all"
         ? Infinity
         : Number.isFinite(parsedLimit) && parsedLimit > 0
-        ? Math.min(parsedLimit, MAX_PAGE_SIZE)
-        : DEFAULT_PAGE_SIZE,
+          ? Math.min(parsedLimit, MAX_PAGE_SIZE)
+          : DEFAULT_PAGE_SIZE,
   };
 }
 

@@ -509,9 +509,7 @@ class EphemeralAgentHandler extends AgentHandler {
           );
         if (this.#parsedDocuments.length > 0)
           this.log(
-            `Injecting ${
-              this.#parsedDocuments.length
-            } attached document(s) into user message`
+            `Injecting ${this.#parsedDocuments.length} attached document(s) into user message`
           );
 
         this.aibitat?.addDocumentCitations(allDocuments);

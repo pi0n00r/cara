@@ -990,9 +990,7 @@ class AgentHandler {
         await this.#providerSetupAndCheck(prompt);
         if (this.provider !== provider || this.model !== model)
           this.log(
-            `Route changed ${this.#invocationUUID}::${this.provider}:${
-              this.model
-            }`
+            `Route changed ${this.#invocationUUID}::${this.provider}:${this.model}`
           );
         this.aibitat.handlerProps.routingMetadata =
           this.routingMetadata || null;
