@@ -85,19 +85,20 @@ default; Cara does not assume or force a named priority tier.
 
 ## Upstream Alignment
 
-Cara `1.19.1` incorporates upstream AnythingLLM through `1.19.1`. This adds
-instance color palettes, Mistral reasoning support, improved Ollama context
-window handling, default-branch discovery for GitLab and Gitea repositories,
-safer text-split overlap handling, and Windows collector path corrections.
-Cara's provider hardening, Codex subscription support, Harmony tool loop,
-privacy defaults, profile compatibility, and complete Windows runtime package
-remain intact.
+Cara `1.19.1` incorporates upstream AnythingLLM master through commit
+`cbaf3357c`, after the upstream `1.19.0` release. In addition to the 1.19.0
+feature set, this includes subsequent workspace search, agent, MCP, mobile,
+Telegram, document-storage, Windows-path, and security corrections. Cara's
+provider hardening, Codex subscription support, Harmony tool loop, privacy
+defaults, profile compatibility, and complete Windows runtime package remain
+intact.
 
 ## Version Guidance
 
 | Version | Status | Operator guidance |
 | --- | --- | --- |
 | `1.19.1` | Current tested build | Upstream-aligned application and Windows package. It preserves the complete pinned Codex runtime needed for code mode and retains the provider, agent, Harmony, privacy, and preserved-profile corrections. Fully exit Cara and its provider sidecar before an in-place upgrade. |
+| `1.19.0` | Superseded | Initial upstream 1.19.0-aligned Cara release. Use `1.19.1` for the post-release upstream corrections. |
 | `0.2.2` | Superseded | Last pre-alignment release. Functional, but use `1.19.1` for the current upstream application and fork fixes. |
 | `0.2.1` | Superseded | Do not install, promote, retag, or repackage. Its Windows package omitted Codex companion executables and resources. |
 | `0.2.0` | Superseded | Do not install, promote, retag, or repackage. Native sign-in, model discovery, and direct inference passed, but automatic workspace agents rejected `codex-subscription` during setup. The correction is in `0.2.1`. |
