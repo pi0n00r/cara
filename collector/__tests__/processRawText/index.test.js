@@ -105,7 +105,31 @@ describe("processRawText title", () => {
   });
 
   test.each([
-    ["../../etc/passwd", ".txt"],
+    ["Dr. Smith's notes", "dr-smith's-notes.txt"],
+    ["Node.js 22 release notes", "node-js-22-release-notes.txt"],
+    ["Pricing v2.0", "pricing-v2-0.txt"],
+    ["Q3 report v1.2.pdf", "q3-report-v1-2.txt"],
+  ])(
+    "title %p keeps the text after a dot that is not an extension as %p",
+    async (title, expected) => {
+      const doc = await run({ title });
+      expect(doc.title).toBe(expected);
+    }
+  );
+
+  test.each([
+    ["会议纪要", "会议纪要.txt"],
+    ["회의록.md", "회의록.txt"],
+    ["שלום עולם", "שלום-עולם.txt"],
+    ["नमस्ते.txt", "नमस्ते.txt"],
+    ["Q3 会议纪要.pdf", "q3-会议纪要.txt"],
+  ])("non-Latin title %p keeps its text as %p", async (title, expected) => {
+    const doc = await run({ title });
+    expect(doc.title).toBe(expected);
+  });
+
+  test.each([
+    ["../../etc/passwd", "etcpasswd.txt"],
     ["../../evil.txt", "evil.txt"],
     ["..\\..\\windows.txt", "windows.txt"],
     ["/absolute/path.txt", "absolutepath.txt"],

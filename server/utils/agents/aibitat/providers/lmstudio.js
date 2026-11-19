@@ -98,7 +98,7 @@ class LMStudioProvider extends InheritMultiple([Provider, UnTooled]) {
   // ---- UnTooled callbacks (used when native tool calling is not supported) ----
 
   async #handleFunctionCallChat({ messages = [] }) {
-    await LMStudioLLM.cacheContextWindows();
+    await LMStudioLLM.contextWindows.ensure(this.model);
     return await this.client.chat.completions
       .create({
         model: this.model,
@@ -119,7 +119,7 @@ class LMStudioProvider extends InheritMultiple([Provider, UnTooled]) {
   }
 
   async #handleFunctionCallStream({ messages = [] }) {
-    await LMStudioLLM.cacheContextWindows();
+    await LMStudioLLM.contextWindows.ensure(this.model);
     return await this.client.chat.completions.create({
       model: this.model,
       ...temperatureParam(this.temperature),
@@ -151,7 +151,7 @@ class LMStudioProvider extends InheritMultiple([Provider, UnTooled]) {
     );
 
     try {
-      await LMStudioLLM.cacheContextWindows();
+      await LMStudioLLM.contextWindows.ensure(this.model);
       return await tooledStream(
         this.client,
         this.model,
@@ -207,7 +207,7 @@ class LMStudioProvider extends InheritMultiple([Provider, UnTooled]) {
     }
 
     try {
-      await LMStudioLLM.cacheContextWindows();
+      await LMStudioLLM.contextWindows.ensure(this.model);
       const result = await tooledComplete(
         this.client,
         this.model,

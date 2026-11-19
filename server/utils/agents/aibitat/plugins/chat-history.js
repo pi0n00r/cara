@@ -61,7 +61,13 @@ const chatHistory = {
                 attachments,
               },
             });
-            if (chat) aibitat.registerChatId(chat.id);
+            if (chat) {
+              aibitat.registerChatId(chat.id);
+              aibitat.socket?.send?.("reportStreamEvent", {
+                type: "promptChatId",
+                chatId: chat.id,
+              });
+            }
           }
         });
 

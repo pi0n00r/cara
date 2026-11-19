@@ -1,4 +1,5 @@
 const MCPHypervisor = require("./hypervisor");
+const { resolveMCPIdentity, withMCPIdentity } = require("./identity");
 
 // JSON-RPC "Method not found". A server that does not implement `ping`
 // answers with this code, which still proves it is alive.
@@ -25,7 +26,7 @@ async function isMCPServerReachable(mcp) {
 
 // The SDK returns one page per call. Only expose the list once every page
 // has loaded, so a later-page error cannot silently hide tools.
-async function listAllMCPTools(mcp) {
+async function listAllMCPTools(mcp, _meta = undefined) {
   const tools = [];
   const seenCursors = new Set();
   let pageCount = 0;
@@ -34,8 +35,12 @@ async function listAllMCPTools(mcp) {
     pageCount += 1;
     if (pageCount > MAX_TOOLS_LIST_PAGES)
       throw new Error(`MCP tools/list exceeded ${MAX_TOOLS_LIST_PAGES} pages`);
+    const params = {
+      ...(cursor !== undefined && { cursor }),
+      ...(_meta && { _meta }),
+    };
     const page = await mcp.listTools(
-      cursor === undefined ? undefined : { cursor }
+      Object.keys(params).length ? params : undefined
     );
     tools.push(...page.tools);
     cursor = page.nextCursor;
@@ -74,13 +79,20 @@ class MCPCompatibilityLayer extends MCPHypervisor {
    * @param {Object} aibitat - The aibitat object to pass to the plugin
    * @returns {Promise<{name: string, description: string, plugin: Function}[]|null>} Array of plugin configurations or null if not found
    */
-  async convertServerToolsToPlugins(name, _aibitat = null) {
+  async convertServerToolsToPlugins(name, aibitat = null) {
     const mcp = this.mcps[name];
     if (!mcp) return null;
 
+    const identity = await resolveMCPIdentity(
+      this.getForwardIdentityFields(name),
+      aibitat
+    );
+
     let tools;
     try {
-      tools = await listAllMCPTools(mcp);
+      tools = await withMCPIdentity(identity, () =>
+        listAllMCPTools(mcp, identity?._meta)
+      );
     } catch (error) {
       this.log(`Failed to list tools for MCP server ${name}:`, error);
       return null;
@@ -143,10 +155,16 @@ class MCPCompatibilityLayer extends MCPHypervisor {
                         2
                       )}`
                     );
-                    const result = await currentMcp.callTool(
-                      { name: tool.name, arguments: args },
-                      undefined,
-                      { timeout: mcpLayer.getToolCallTimeout(name) }
+                    const result = await withMCPIdentity(identity, () =>
+                      currentMcp.callTool(
+                        {
+                          name: tool.name,
+                          arguments: args,
+                          ...(identity && { _meta: identity._meta }),
+                        },
+                        undefined,
+                        { timeout: mcpLayer.getToolCallTimeout(name) }
+                      )
                     );
                     aibitat.handlerProps.log(
                       `MCP server: ${name}:${tool.name} completed successfully`,
@@ -302,6 +320,53 @@ class MCPCompatibilityLayer extends MCPHypervisor {
   }
 
   /**
+   * Create or replace an MCP server definition in the config file, then
+   * (re)start it. The definition is kept even if the server fails to start,
+   * so it can be fixed with another update - the start outcome is reported
+   * separately via `running` and `startError`.
+   * @param {string} name - The name of the MCP server
+   * @param {Object} config - The full server definition (replaces any existing one)
+   * @param {{create: boolean}} options - create: true to add (name must be new), false to update (name must exist)
+   * @returns {Promise<{success: boolean, error: string | null, running: boolean, startError: string | null}>}
+   */
+  async saveServer(name, config, { create }) {
+    const exists = this.mcpServerConfigs.some((s) => s.name === name);
+    const fail = (error) => ({
+      success: false,
+      error,
+      running: false,
+      startError: null,
+    });
+    if (create && exists)
+      return fail(`MCP server ${name} already exists in config file.`);
+    if (!create && !exists)
+      return fail(`MCP server ${name} not found in config file.`);
+
+    const written = this.writeMCPServerToConfig(name, config);
+    if (!written.success) return fail(written.error);
+
+    // Stop the old instance so the new definition takes effect.
+    this.pruneMCPServer(name);
+    delete this.mcpLoadingResults[name];
+
+    if (config.anythingllm?.autoStart === false) {
+      this.mcpLoadingResults[name] = {
+        status: "failed",
+        message: `MCP server ${name} has anythingllm.autoStart property set to false, boot skipped!`,
+      };
+      return { success: true, error: null, running: false, startError: null };
+    }
+
+    const started = await this.startMCPServer(name);
+    return {
+      success: true,
+      error: null,
+      running: started.success,
+      startError: started.success ? null : started.error,
+    };
+  }
+
+  /**
    * Return the useful MCP payload as a string for the agent.
    * Text blocks are returned as-is so JSON inside them is not escaped again.
    * Error results keep the full envelope so the agent sees `isError: true`.
@@ -359,13 +424,44 @@ class MCPCompatibilityLayer extends MCPHypervisor {
   }
 
   /**
-   * Toggle tool suppression for an MCP server
+   * Toggle tool suppression for an MCP server.
+   * The server must be running so the tool name can be checked against the
+   * tools it reports. A name already in suppressedTools can always be
+   * re-enabled, so entries for tools the server no longer has can be cleared.
+   * To suppress tools before a server's first start, set
+   * `anythingllm.suppressedTools` in its config instead.
    * @param {string} serverName - The name of the MCP server
    * @param {string} toolName - The name of the tool to toggle
    * @param {boolean} enabled - Whether the tool should be enabled (true) or suppressed (false)
    * @returns {Promise<{success: boolean, error: string | null, suppressedTools: string[]}>}
    */
   async toggleToolSuppression(serverName, toolName, enabled) {
+    const fail = (error) => ({ success: false, error, suppressedTools: [] });
+    if (!this.mcpServerConfigs.some((s) => s.name === serverName))
+      return fail(`MCP server ${serverName} not found in config file.`);
+
+    const clearingStaleEntry =
+      enabled === true &&
+      this.getSuppressedTools(serverName).includes(toolName);
+    if (!clearingStaleEntry) {
+      const mcp = this.mcps[serverName];
+      if (!mcp)
+        return fail(
+          `MCP server ${serverName} is not running - start it to toggle its tools.`
+        );
+
+      let tools;
+      try {
+        tools = await listAllMCPTools(mcp);
+      } catch (error) {
+        return fail(
+          `Failed to list tools for MCP server ${serverName}: ${error.message}`
+        );
+      }
+      if (!tools.some((tool) => tool.name === toolName))
+        return fail(`Tool ${toolName} not found on MCP server ${serverName}.`);
+    }
+
     return this.updateSuppressedTools(serverName, toolName, enabled);
   }
 }
